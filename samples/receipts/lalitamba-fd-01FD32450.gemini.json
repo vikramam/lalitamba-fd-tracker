@@ -1,0 +1,22 @@
+{
+  "holder_name": "Sri/Smt VIKRAM A MULGUND",
+  "holder_address": "MULGUND COMPLEX, GADAG",
+  "bank_customer_id": "1700",
+  "fd_account_no": "01FD32450",
+  "principal_amount": "450000/-",
+  "principal_amount_words": "Four Lakh Fifty Thousand Only",
+  "interest_rate_pct": "11.00 %",
+  "tenure_label": "5 Years",
+  "interest_mode": "monthly",
+  "monthly_interest_amount": "0",
+  "interest_credit_account": "01003MS001396",
+  "maturity_value": null,
+  "fd_date": "25-10-2023",
+  "transaction_date": "25-10-2023",
+  "print_at": "25-Oct-2023 16:10:05",
+  "maturity_date": "23-10-2028",
+  "nominee_name": "SHAKUNTALA A MULGUND",
+  "nominee_relationship": "Mother",
+  "raw_interest_line": "Interest Mode : On Maturity",
+  "raw_text": "Interest Mode : On Maturity\nMaturtiy Value 697500/-\nDate of Maturity 23-10-2028"
+}

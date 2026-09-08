@@ -1,0 +1,4 @@
+project_id = "fhcfgamxsvbiodhiapit"
+
+[functions.extract-fd-receipt]
+verify_jwt = true

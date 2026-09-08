@@ -1,0 +1,21 @@
+{
+  "holder_name": "Sri/Smt VIKRAM A MULGUND",
+  "holder_address": "MULGUND COMPLEX, GADAG",
+  "bank_customer_id": "1700",
+  "fd_account_no": "01FD40599",
+  "principal_amount": "1,50,000/-",
+  "principal_amount_words": "One Lakh Fifty Thousand Only",
+  "interest_rate_pct": "11.00 %",
+  "tenure_label": "3 Years",
+  "interest_mode": "unknown",
+  "monthly_interest_amount": null,
+  "interest_credit_account": null,
+  "maturity_value": "150000/-",
+  "fd_date": "26-05-2025",
+  "transaction_date": "26-05-2025",
+  "print_at": "26-May-2025 16:12:32",
+  "maturity_date": "25-05-2028",
+  "nominee_name": "AMRUTMATI VIKRAM MULGUND",
+  "nominee_relationship": "wife",
+  "raw_interest_line": "Interest Rs. 1375/- Monthly CR To MS A/c :01003MS001396"
+}
