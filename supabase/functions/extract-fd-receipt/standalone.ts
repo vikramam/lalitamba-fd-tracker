@@ -6,7 +6,6 @@ const GEMINI_MODELS = [
 ] as const
 const CODE_VERSION = 'flash-lite-500'
 const HOURLY_LIMIT = 20
-const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/
 
 const GEMINI_SCHEMA = {
   type: 'object',
@@ -108,22 +107,20 @@ const MONTHS: Record<string, string> = {
 }
 
 function corsHeaders(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  const listed = (Deno.env.get('APP_ORIGIN') ?? 'http://127.0.0.1:43187')
-    .split(',')
-    .map((value) => {
-      const trimmed = value.trim().replace(/\/$/, '')
-      if (!trimmed) return ''
-      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
-    })
-    .filter(Boolean)
-  const allow =
-    origin &&
-    (listed.includes(origin) ||
-      LOCAL.test(origin) ||
-      /^https:\/\/([a-z0-9-]+\.)*vercel\.app$/.test(origin))
-      ? origin
-      : listed[0] ?? 'http://127.0.0.1:43187'
+  const raw = (req.headers.get('Origin') ?? '').trim().replace(/\/$/, '')
+  const origin = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw
+  let allow = 'http://127.0.0.1:43187'
+  try {
+    const url = new URL(origin)
+    if (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      origin === url.origin
+    ) {
+      allow = origin
+    }
+  } catch {
+    /* keep fallback */
+  }
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Headers':

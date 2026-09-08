@@ -67,8 +67,9 @@ export async function extractFdReceipt(input: {
     throw new Error(upload.error.message)
   }
 
-  const { data, error } = await supabase.functions.invoke('extract-fd-receipt', {
-    body: { storage_path: storagePath, family_id: input.familyId },
+  const { data, error } = await invokeExtract({
+    storage_path: storagePath,
+    family_id: input.familyId,
   })
   if (error) {
     if (fixtureId) {
@@ -133,6 +134,33 @@ export async function extractFdReceipt(input: {
     status: 'succeeded',
     message: payload.message ?? null,
   }
+}
+
+async function invokeExtract(body: { storage_path: string; family_id: string }) {
+  if (import.meta.env.PROD && supabase) {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    const response = await fetch('/api/extract-fd-receipt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    })
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null
+    if (!response.ok) {
+      return {
+        data: null,
+        error: new Error(payload?.error ?? `OCR failed (${response.status})`),
+      }
+    }
+    return { data: payload, error: null }
+  }
+
+  return supabase!.functions.invoke('extract-fd-receipt', { body })
 }
 
 export async function linkOcrRun(input: {

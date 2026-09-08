@@ -1,6 +1,3 @@
-const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/
-const VERCEL = /^https:\/\/([a-z0-9-]+\.)*vercel\.app$/
-
 function asOrigin(value: string) {
   const trimmed = value.trim().replace(/\/$/, '')
   if (!trimmed) return ''
@@ -8,21 +5,29 @@ function asOrigin(value: string) {
   return `https://${trimmed}`
 }
 
-function allowedOrigins() {
+function isBrowserOrigin(value: string) {
+  try {
+    const url = new URL(value)
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      value === url.origin
+    )
+  } catch {
+    return false
+  }
+}
+
+function fallbackOrigin() {
   const fromEnv = (Deno.env.get('APP_ORIGIN') ?? '')
     .split(',')
     .map(asOrigin)
-    .filter(Boolean)
-  return fromEnv.length > 0 ? fromEnv : ['http://127.0.0.1:43187']
+    .find(isBrowserOrigin)
+  return fromEnv || 'http://127.0.0.1:43187'
 }
 
 export function corsHeaders(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  const listed = allowedOrigins()
-  const allow =
-    origin && (listed.includes(origin) || LOCAL.test(origin) || VERCEL.test(origin))
-      ? origin
-      : listed[0]
+  const origin = asOrigin(req.headers.get('Origin') ?? '')
+  const allow = isBrowserOrigin(origin) ? origin : fallbackOrigin()
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Headers':
