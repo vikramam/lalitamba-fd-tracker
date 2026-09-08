@@ -1,0 +1,36 @@
+name: Keep Supabase Alive
+
+# Supabase pauses free-tier projects after 7 days with no activity. This job
+# pings the project's REST endpoint every 3 days — comfortably inside that
+# window even if a run gets skipped or delayed — so the database never goes
+# to sleep. It doesn't touch any table or need RLS to pass; hitting the
+# REST root is enough to register activity.
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *' # every 3 days at 06:00 UTC
+  workflow_dispatch: {} # lets you trigger it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets are set
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL and/or SUPABASE_ANON_KEY repository secrets are missing or empty. Add them under Settings -> Secrets and variables -> Actions -> Repository secrets (not Environment secrets, unless this job also declares 'environment:')."
+            exit 1
+          fi
+          echo "Secrets found (URL length: ${#SUPABASE_URL}, key length: ${#SUPABASE_ANON_KEY})"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Ping Supabase REST endpoint
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "Supabase responded with HTTP $status"
+          # Any response (even 401/404) means the request reached Postgres
+          # and counted as activity — don't fail the job on a non-200.
