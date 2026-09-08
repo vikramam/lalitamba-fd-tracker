@@ -111,7 +111,11 @@ function corsHeaders(req: Request) {
   const origin = req.headers.get('Origin') ?? ''
   const listed = (Deno.env.get('APP_ORIGIN') ?? 'http://127.0.0.1:43187')
     .split(',')
-    .map((value) => value.trim())
+    .map((value) => {
+      const trimmed = value.trim().replace(/\/$/, '')
+      if (!trimmed) return ''
+      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+    })
     .filter(Boolean)
   const allow =
     origin &&

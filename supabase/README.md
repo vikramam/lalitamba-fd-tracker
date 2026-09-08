@@ -48,10 +48,10 @@ supabase functions deploy extract-fd-receipt
 supabase secrets set GEMINI_API_KEY=...
 ```
 
-Set `APP_ORIGIN` to the live site if it is not a `*.vercel.app` URL (comma-separated if you have more than one):
+Set `APP_ORIGIN` to the full site URL, including `https://` (comma-separated if you have more than one):
 
 ```
-supabase secrets set APP_ORIGIN=https://your-app.vercel.app
+supabase secrets set APP_ORIGIN=https://lalitamba-fd-tracker.vercel.app
 ```
 
 `*.vercel.app` and localhost are allowed without that secret. The Gemini key never goes in Vercel `VITE_*` variables.
