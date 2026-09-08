@@ -48,6 +48,12 @@ supabase functions deploy extract-fd-receipt
 supabase secrets set GEMINI_API_KEY=...
 ```
 
-Optional: `APP_ORIGIN=https://your-app.vercel.app` for CORS.
+Set `APP_ORIGIN` to the live site if it is not a `*.vercel.app` URL (comma-separated if you have more than one):
+
+```
+supabase secrets set APP_ORIGIN=https://your-app.vercel.app
+```
+
+`*.vercel.app` and localhost are allowed without that secret. The Gemini key never goes in Vercel `VITE_*` variables.
 
 If the key is missing, the function writes `ocr_runs.status = skipped` and the form stays manual. The browser bundle must not contain `GEMINI_API_KEY`.
