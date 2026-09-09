@@ -36,7 +36,7 @@ function SectionCard({
   if (items.length === 0) return null
   return (
     <section className="surface-card mt-4 p-4">
-      <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+      <p className="type-label">
         {title}
       </p>
       <dl className="mt-3 divide-y divide-line">{items}</dl>
@@ -48,15 +48,15 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   if (!value) return null
   return (
     <div className="flex items-baseline justify-between gap-4 py-3 first:pt-1 last:pb-1">
-      <dt className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">{label}</dt>
-      <dd className="text-right text-[13px] text-ink">{value}</dd>
+      <dt className="type-label">{label}</dt>
+      <dd className="type-list-value text-right text-ink">{value}</dd>
     </div>
   )
 }
 
 function actionClass(tone: 'default' | 'danger' = 'default') {
   return cn(
-    'surface-card flex flex-1 flex-col items-center gap-0.5 px-1.5 py-1.5 text-[10px] font-semibold disabled:opacity-50',
+    'type-micro surface-card flex flex-1 flex-col items-center gap-0.5 px-1.5 py-1.5 font-bold disabled:opacity-50',
     tone === 'danger' ? 'text-danger' : 'text-ink',
   )
 }
@@ -117,33 +117,33 @@ function HolderDetails({
     <div className="mt-5 border-t border-line pt-4">
       {holder ? (
         <div>
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <p className="type-label">
             Holder
           </p>
-          <p className="mt-1 text-[13px] text-ink">{holder}</p>
+          <p className="mt-1 type-body text-ink">{holder}</p>
         </div>
       ) : null}
       {address ? (
         <div className={holder ? 'mt-3' : undefined}>
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <p className="type-label">
             Address
           </p>
-          <p className="mt-1 text-[13px] leading-5 text-ink">{address}</p>
+          <p className="mt-1 type-body leading-5 text-ink">{address}</p>
         </div>
       ) : null}
       {nominee || relationship ? (
         <div className={`grid grid-cols-2 gap-3 ${holder || address ? 'mt-3' : ''}`}>
           <div>
-            <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+            <p className="type-label">
               Nominee
             </p>
-            <p className="mt-1 text-[13px] text-ink">{nominee || '—'}</p>
+            <p className="mt-1 type-body text-ink">{nominee || '—'}</p>
           </div>
           <div>
-            <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+            <p className="type-label">
               Relationship
             </p>
-            <p className="mt-1 text-[13px] text-ink">{relationship || '—'}</p>
+            <p className="mt-1 type-body text-ink">{relationship || '—'}</p>
           </div>
         </div>
       ) : null}
@@ -182,8 +182,8 @@ export function FdDetailPage() {
   if (!fd) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">Deposit not found, or you cannot see it.</p>
-        <Link to="/fds" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">Deposit not found, or you cannot see it.</p>
+        <Link to="/fds" className="mt-4 inline-block type-body text-accent">
           Back to FDs
         </Link>
       </Page>
@@ -216,22 +216,22 @@ export function FdDetailPage() {
 
   return (
     <Page>
-      <Link to="/fds" className="text-[13px] text-muted">
+      <Link to="/fds" className="type-body text-muted">
         Back
       </Link>
       <div className="mt-4">
-        <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+        <p className="type-label">
           {formatInterestMode(fd.interest_mode)}
         </p>
-        <h1 className="mt-1 font-display text-[20px] font-bold tracking-tight">
+        <h1 className="type-section mt-1">
           {fd.fd_account_no ?? 'Fixed deposit'}
         </h1>
-        <p className="mt-1 text-[13px] text-muted">{member?.full_name ?? fd.holder_name}</p>
+        <p className="mt-1 type-body text-muted">{member?.full_name ?? fd.holder_name}</p>
       </div>
 
       <section className="hero-card mt-6 p-5">
         <div className="flex items-start justify-between gap-3">
-          <p className="min-w-0 font-mono text-[26px] font-semibold tracking-tight">
+          <p className="type-stat-hero min-w-0">
             {formatInr(fd.principal_amount)}
           </p>
           <div className="mt-1 flex shrink-0 flex-col items-end gap-1">
@@ -240,15 +240,15 @@ export function FdDetailPage() {
           </div>
         </div>
         {credit ? (
-          <p className="mt-4 font-mono text-[18px] text-ink">{formatInr(credit.amount)}</p>
+          <p className="type-stat-secondary mt-4 text-ink">{formatInr(credit.amount)}</p>
         ) : null}
         {credit ? (
-          <p className="mt-1 text-[12px] text-muted">
+          <p className="mt-1 type-small">
             Interest credited
             {credit.months === 1 ? ' · 1 month' : ` · ${credit.months} months`}
           </p>
         ) : (
-          <p className="mt-2 text-[12px] text-muted">Principal</p>
+          <p className="mt-2 type-small">Principal</p>
         )}
         <HolderDetails
           holder={fd.holder_name}
@@ -286,7 +286,7 @@ export function FdDetailPage() {
         </div>
       ) : null}
       {closure ? (
-        <p className="mt-6 text-[13px] text-muted">
+        <p className="mt-6 type-body text-muted">
           Received {closure.amount_received === null ? '—' : formatInr(closure.amount_received)}
           {closure.is_premature ? (
             <span className="text-danger"> · Premature</span>
@@ -296,7 +296,7 @@ export function FdDetailPage() {
       ) : null}
 
       {chain.length > 1 ? (
-        <p className="mt-6 font-mono text-[12px] text-muted">
+        <p className="mt-6 font-mono type-small">
           {chain.map((row, index) => (
             <span key={row.id}>
               {index > 0 ? ' → ' : ''}
@@ -313,7 +313,7 @@ export function FdDetailPage() {
       ) : null}
 
       {links.asNext && previous ? (
-        <p className="mt-3 text-[13px] text-muted">
+        <p className="mt-3 type-body text-muted">
           Renewed from {previous.fd_account_no ?? 'previous FD'}
           {links.asNext.suggested_carry !== null
             ? ` · ${carryMessage(links.asNext.suggested_carry, fd.principal_amount)}`
@@ -322,18 +322,18 @@ export function FdDetailPage() {
       ) : null}
 
       {corrected.length > 0 ? (
-        <p className="mt-6 text-[13px] text-muted">
+        <p className="mt-6 type-body text-muted">
           {corrected.length} {corrected.length === 1 ? 'field' : 'fields'} corrected from the
           receipt.
         </p>
       ) : reviews.length > 0 ? (
-        <p className="mt-6 text-[13px] text-muted">Receipt fields confirmed without changes.</p>
+        <p className="mt-6 type-body text-muted">Receipt fields confirmed without changes.</p>
       ) : null}
 
       {checks.length > 0 ? (
         <ul className="mt-6 space-y-2">
           {checks.map((message) => (
-            <li key={message} className="text-[13px] text-warn">
+            <li key={message} className="type-body text-warn">
               {message}
             </li>
           ))}
@@ -399,10 +399,10 @@ export function FdDetailPage() {
 
       {fd.notes ? (
         <section className="surface-card mt-4 p-4">
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <p className="type-label">
             Notes
           </p>
-          <p className="mt-3 text-[13px] text-ink">{fd.notes}</p>
+          <p className="mt-3 type-body text-ink">{fd.notes}</p>
         </section>
       ) : null}
 
@@ -443,7 +443,7 @@ function ReceiptSection({
 
   return (
     <section className="surface-card mt-8 p-4">
-      <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">Receipt</p>
+      <p className="type-label">Receipt</p>
       {receipt ? (
         <div className="mt-4">
           {url && receipt.mime_type.startsWith('image/') ? (
@@ -456,19 +456,19 @@ function ReceiptSection({
             </Link>
           ) : null}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Link to={`/fds/${fdId}/receipt`} className="text-[13px] text-accent">
+            <Link to={`/fds/${fdId}/receipt`} className="type-body text-accent">
               View receipt
             </Link>
             <ReceiptDownloadButton receipt={receipt} household={household} />
             <ReceiptShareButton receipt={receipt} household={household} />
           </div>
-          <p className="mt-1 font-mono text-[11px] text-muted">
+          <p className="mt-1 type-micro type-num text-muted">
             {receipt.file_name}
             {receipt.file_size ? ` · ${formatFileSize(receipt.file_size)}` : ''}
           </p>
         </div>
       ) : (
-        <p className="mt-3 text-[13px] text-muted">
+        <p className="mt-3 type-body text-muted">
           No receipt yet.
           {canWrite ? (
             <>

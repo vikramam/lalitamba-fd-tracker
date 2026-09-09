@@ -30,11 +30,11 @@ export function ListRow({
     >
       {leading}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13.5px] font-medium text-ink">{title}</p>
+        <p className="type-card-title truncate text-ink">{title}</p>
         {subtitle ? (
           <p
             className={cn(
-              'mt-0.5 text-[12px]',
+              'type-small mt-0.5',
               tone === 'danger'
                 ? 'text-danger'
                 : tone === 'warn'

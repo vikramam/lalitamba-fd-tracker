@@ -56,15 +56,15 @@ export function MembersPage() {
         action={canManage ? <AddIconLink to="/members/new" label="Add member" /> : null}
       />
 
-      <p className="mt-3 text-[13px] text-muted">
+      <p className="mt-3 type-body text-muted">
         Tap a name to see their FDs. Use the pencil to change their details.
         Add or edit a family in Settings.
       </p>
 
       {household && household.families.length === 0 ? (
         <div className="surface-card mt-8 p-5">
-          <p className="text-[13.5px] font-medium text-ink">No family yet.</p>
-          <p className="mt-2 text-[13px] text-muted">
+          <p className="type-card-title text-ink">No family yet.</p>
+          <p className="mt-2 type-body text-muted">
             Create a family first so you can add people and their FDs.
           </p>
           <Button asChild className="mt-6" size="lg">
@@ -86,20 +86,27 @@ export function MembersPage() {
           return (
             <li key={member.id} className="surface-card flex items-center gap-3 px-3.5 py-3.5">
               <Link to={`/fds?member=${member.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-inner text-[10px] font-semibold text-ink">
+                <span className="type-micro flex size-7 shrink-0 items-center justify-center rounded-lg bg-inner font-semibold text-ink">
                   {initials(member.full_name)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-medium text-ink">{member.full_name}</p>
-                  <p className="mt-0.5 text-[12px] text-muted">
-                    {member.bank_customer_id ? `CID ${member.bank_customer_id}` : 'No CID'}
+                  <p className="truncate type-card-title text-ink">{member.full_name}</p>
+                  <p className="mt-0.5 type-small">
+                    {member.bank_customer_id ? (
+                      <>
+                        CID <span className="type-num">{member.bank_customer_id}</span>
+                      </>
+                    ) : (
+                      'No CID'
+                    )}
                     {familyName ? ` · ${familyName}` : ''}
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-mono text-[13px]">{formatInr(principal)}</p>
-                  <p className="text-[11px] text-muted">
-                    {fds.length} {fds.length === 1 ? 'FD' : 'FDs'}
+                  <p className="type-list-value">{formatInr(principal)}</p>
+                  <p className="type-small">
+                    <span className="type-num">{fds.length}</span>{' '}
+                    {fds.length === 1 ? 'FD' : 'FDs'}
                   </p>
                 </div>
               </Link>
@@ -129,7 +136,7 @@ export function MembersPage() {
       </ul>
 
       {household && household.members.length === 0 && household.families.length > 0 ? (
-        <p className="mt-8 text-[13px] text-muted">No members yet.</p>
+        <p className="mt-8 type-body text-muted">No members yet.</p>
       ) : null}
     </Page>
   )

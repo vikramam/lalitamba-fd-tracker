@@ -20,8 +20,8 @@ export function ManageFamiliesPage() {
   if (!canManage) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">You cannot manage families.</p>
-        <Link to="/settings" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">You cannot manage families.</p>
+        <Link to="/settings" className="mt-4 inline-block type-body text-accent">
           Back to settings
         </Link>
       </Page>
@@ -61,16 +61,14 @@ export function ManageFamiliesPage() {
       <div className="mt-4">
         <ScreenTitle eyebrow="Settings" title="Family" />
       </div>
-      <p className="mt-3 text-[13px] text-muted">
+      <p className="mt-3 type-body text-muted">
         Add or edit a family so people and FDs have a home.
       </p>
 
       <section className="surface-card mt-6 p-4">
-        <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-          Families
-        </p>
+        <p className="type-card-title text-ink">Families</p>
         {families.length === 0 ? (
-          <p className="mt-3 text-[13px] text-muted">
+          <p className="mt-3 type-body text-muted">
             No family yet. Add one to start adding people and FDs.
           </p>
         ) : (
@@ -80,7 +78,7 @@ export function ManageFamiliesPage() {
                 key={family.id}
                 className="flex items-center justify-between gap-3 border-t border-line py-3 first:border-t-0 first:pt-0"
               >
-                <p className="min-w-0 truncate text-[13px] text-ink">{family.name}</p>
+                <p className="type-card-title min-w-0 truncate text-ink">{family.name}</p>
                 <div className="flex shrink-0 items-center">
                   <Link
                     to={`/families/${family.id}`}

@@ -20,7 +20,7 @@ export function SetupBanner() {
 
   return (
     <p
-      className="border-b border-line px-4 py-3 text-center text-[12px] leading-relaxed text-warn"
+      className="type-small border-b border-line px-4 py-3 text-center leading-relaxed text-warn"
       style={{ background: 'rgba(217,130,43,0.14)' }}
     >
       {message}

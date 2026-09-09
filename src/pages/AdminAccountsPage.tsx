@@ -64,8 +64,8 @@ export function AdminAccountsPage() {
   if (!canManage) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">Only an app admin can manage accounts.</p>
-        <Link to="/settings" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">Only an app admin can manage accounts.</p>
+        <Link to="/settings" className="mt-4 inline-block type-body text-accent">
           Back to settings
         </Link>
       </Page>
@@ -93,15 +93,15 @@ export function AdminAccountsPage() {
       <li className="border-t border-line py-3 first:border-t-0 first:pt-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate font-mono text-[13px] text-ink">{account.email}</p>
-            <p className="mt-1 text-[12px] text-muted">{roleLabel(account)}</p>
+            <p className="type-card-title truncate text-ink">{account.email}</p>
+            <p className="mt-1 type-small">{roleLabel(account)}</p>
           </div>
           <StatusBadge tone={statusTone(account.approval_status)}>
             {account.approval_status}
           </StatusBadge>
         </div>
         {locked ? (
-          <p className="mt-2 text-[12px] text-muted">
+          <p className="mt-2 type-small">
             {self ? 'This is you.' : 'Super admin accounts cannot be changed here.'}
           </p>
         ) : (
@@ -110,7 +110,7 @@ export function AdminAccountsPage() {
               <button
                 type="button"
                 disabled={working}
-                className="text-[13px] text-accent disabled:opacity-50"
+                className="type-body text-accent disabled:opacity-50"
                 onClick={() =>
                   void run(account.id, () =>
                     setAccountApproval(user!.email, account.id, 'approved'),
@@ -124,7 +124,7 @@ export function AdminAccountsPage() {
               <button
                 type="button"
                 disabled={working}
-                className="text-[13px] text-accent disabled:opacity-50"
+                className="type-body text-accent disabled:opacity-50"
                 onClick={() =>
                   void run(account.id, () =>
                     setAccountApproval(user!.email, account.id, 'rejected'),
@@ -138,7 +138,7 @@ export function AdminAccountsPage() {
               <button
                 type="button"
                 disabled={working}
-                className="text-[13px] text-accent disabled:opacity-50"
+                className="type-body text-accent disabled:opacity-50"
                 onClick={() =>
                   void run(account.id, () => setAccountAdmin(user!.email, account.id, true))
                 }
@@ -150,7 +150,7 @@ export function AdminAccountsPage() {
               <button
                 type="button"
                 disabled={working}
-                className="text-[13px] text-accent disabled:opacity-50"
+                className="type-body text-accent disabled:opacity-50"
                 onClick={() =>
                   void run(account.id, () => setAccountAdmin(user!.email, account.id, false))
                 }
@@ -161,7 +161,7 @@ export function AdminAccountsPage() {
             <button
               type="button"
               disabled={working}
-              className="text-[13px] text-danger disabled:opacity-50"
+              className="type-body text-danger disabled:opacity-50"
               onClick={() => {
                 void (async () => {
                   const ok = await confirm({
@@ -189,7 +189,7 @@ export function AdminAccountsPage() {
       <div className="mt-4">
         <ScreenTitle eyebrow="Admin" title="Accounts" />
       </div>
-      <p className="mt-3 text-[13px] text-muted">
+      <p className="mt-3 type-body text-muted">
         New sign-ups wait here until you approve them.
         {isSuperAdmin ? ' Only you can make or remove admins.' : ''}
       </p>
@@ -211,11 +211,9 @@ export function AdminAccountsPage() {
   }) {
     return (
       <section className="surface-card mt-6 p-4">
-        <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-          {title}
-        </p>
+        <p className="type-card-title text-ink">{title}</p>
         {rows.length === 0 ? (
-          <p className="mt-3 text-[13px] text-muted">{empty}</p>
+          <p className="mt-3 type-body text-muted">{empty}</p>
         ) : (
           <ul className="mt-3">
             {rows.map((account) => (

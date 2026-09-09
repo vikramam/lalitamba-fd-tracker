@@ -13,7 +13,7 @@ export function PickerAvatar({
   children?: ReactNode
 }) {
   return (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-inner text-[11px] font-semibold text-ink">
+    <span className="type-micro flex size-9 shrink-0 items-center justify-center rounded-full bg-inner font-semibold text-ink">
       {children ?? initials(name ?? '')}
     </span>
   )
@@ -67,8 +67,8 @@ export function SheetPicker({
       >
         {leading}
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14px] font-semibold text-ink">{valueLabel}</span>
-          <span className="mt-0.5 block text-[12px] text-muted">{hint}</span>
+          <span className="type-card-title block truncate text-ink">{valueLabel}</span>
+          <span className="type-small mt-0.5 block">{hint}</span>
         </span>
         <ChevronIcon className="shrink-0 text-[color:var(--text-tertiary)]" />
       </button>
@@ -92,11 +92,11 @@ export function SheetPicker({
                 >
                   {option.leading}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13.5px] font-medium text-ink">
+                    <span className="type-card-title block truncate text-ink">
                       {option.label}
                     </span>
                     {option.secondary ? (
-                      <span className="mt-0.5 block truncate text-[12px] text-muted">
+                      <span className="type-small mt-0.5 block truncate">
                         {option.secondary}
                       </span>
                     ) : null}

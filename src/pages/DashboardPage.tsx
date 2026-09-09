@@ -29,24 +29,23 @@ export function DashboardPage() {
 
   return (
     <Page>
-      <p className="font-display text-[26px] font-bold tracking-tight text-ink">
+      <p className="type-hero-heading text-ink">
         Hello, {firstName}
       </p>
-      <p className="mt-1 text-[13px] text-muted">{familyLabel}</p>
+      <p className="mt-1 type-body text-muted">{familyLabel}</p>
 
       <section className="hero-card mt-6 p-5">
-        <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+        <p className="type-label">
           Principal outstanding
         </p>
-        <p className="mt-3 font-mono text-[26px] font-semibold tracking-tight text-ink">
+        <p className="type-stat-hero mt-3 text-ink">
           {formatInrLakhs(summary.principal)}
         </p>
-        <p className="mt-1 text-[12px] text-muted">Active deposits only</p>
+        <p className="mt-1 type-small">Active deposits only</p>
         {summary.dueThisMonth.length > 0 ? (
-          <Link to="/fds?due=month" className="mt-3 block text-[13px] text-warn">
-            {summary.dueThisMonth.length === 1
-              ? '1 FD is due this month'
-              : `${summary.dueThisMonth.length} FDs are due this month`}
+          <Link to="/fds?due=month" className="type-body mt-3 block text-warn">
+            <span className="type-num">{summary.dueThisMonth.length}</span>
+            {summary.dueThisMonth.length === 1 ? ' FD is due this month' : ' FDs are due this month'}
           </Link>
         ) : null}
       </section>
@@ -62,7 +61,7 @@ export function DashboardPage() {
 
       <Section title="Due in 90 days" to="/fds?due=90">
         {summary.upcoming.length === 0 ? (
-          <p className="px-1 py-3 text-[13px] text-muted">Nothing maturing in the next 90 days.</p>
+          <p className="px-1 py-3 type-body text-muted">Nothing maturing in the next 90 days.</p>
         ) : (
           <ul className="space-y-2">
             {summary.upcoming.map(({ fd, days }) => {
@@ -73,7 +72,7 @@ export function DashboardPage() {
                   to={`/fds/${fd.id}`}
                   title={member?.display_name || member?.full_name || fd.holder_name || 'Unknown'}
                   subtitle={`${fd.fd_account_no ?? 'FD'} · ${formatDaysUntil(days)}`}
-                  trailing={<span className="font-mono text-[13px]">{formatInr(fd.principal_amount)}</span>}
+                  trailing={<span className="type-list-value">{formatInr(fd.principal_amount)}</span>}
                   tone={days <= 30 ? 'warn' : 'default'}
                 />
               )
@@ -91,7 +90,7 @@ export function DashboardPage() {
                 to={`/fds/${fd.id}`}
                 title={fd.fd_account_no ?? 'FD'}
                 subtitle={`${formatInterestMode(fd.interest_mode)} · ${fd.maturity_date ? formatDate(fd.maturity_date) : 'no date'}`}
-                trailing={<span className="font-mono text-[13px]">{formatInr(fd.principal_amount)}</span>}
+                trailing={<span className="type-list-value">{formatInr(fd.principal_amount)}</span>}
                 tone="danger"
               />
             ))}
@@ -108,7 +107,7 @@ export function DashboardPage() {
                 to={`/fds/${fd.id}`}
                 title={fd.fd_account_no ?? 'FD'}
                 subtitle={`${formatInterestMode(fd.interest_mode)} · ${fd.maturity_date ? formatDate(fd.maturity_date) : 'matured'}`}
-                trailing={<span className="font-mono text-[13px]">{formatInr(fd.principal_amount)}</span>}
+                trailing={<span className="type-list-value">{formatInr(fd.principal_amount)}</span>}
               />
             ))}
           </ul>
@@ -123,8 +122,13 @@ export function DashboardPage() {
                 key={row.memberId}
                 to={`/fds?member=${row.memberId}`}
                 title={row.name}
-                subtitle={`${row.count} ${row.count === 1 ? 'FD' : 'FDs'}`}
-                trailing={<span className="font-mono text-[13px]">{formatInr(row.principal)}</span>}
+                subtitle={
+                  <>
+                    <span className="type-num">{row.count}</span>{' '}
+                    {row.count === 1 ? 'FD' : 'FDs'}
+                  </>
+                }
+                trailing={<span className="type-list-value">{formatInr(row.principal)}</span>}
               />
             ))}
           </ul>
@@ -132,11 +136,11 @@ export function DashboardPage() {
       ) : null}
 
       {household && household.families.length === 0 ? (
-        <p className="mt-8 text-[13px] text-muted">
+        <p className="mt-8 type-body text-muted">
           Create a family on Members or Settings, then add people.
         </p>
       ) : summary.activeCount === 0 ? (
-        <p className="mt-8 text-[13px] text-muted">No active deposits in your access scope.</p>
+        <p className="mt-8 type-body text-muted">No active deposits in your access scope.</p>
       ) : null}
     </Page>
   )
@@ -145,10 +149,8 @@ export function DashboardPage() {
 function Stat({ label, value, to }: { label: string; value: string; to?: string }) {
   const body = (
     <>
-      <p className="font-mono text-[14px] text-ink">{value}</p>
-      <p className="mt-1 text-[9.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-        {label}
-      </p>
+      <p className="type-stat-secondary text-ink">{value}</p>
+      <p className="type-label mt-1">{label}</p>
     </>
   )
 
@@ -176,15 +178,11 @@ function Section({
     <section className="mt-8">
       {to ? (
         <Link to={to} className="mb-3 flex items-center justify-between gap-2">
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-            {title}
-          </p>
+          <p className="type-card-title text-ink">{title}</p>
           <ChevronIcon className="text-[color:var(--text-tertiary)]" />
         </Link>
       ) : (
-        <p className="mb-3 text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-          {title}
-        </p>
+        <p className="type-card-title mb-3 text-ink">{title}</p>
       )}
       {children}
     </section>

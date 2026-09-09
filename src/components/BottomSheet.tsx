@@ -61,7 +61,7 @@ export function BottomSheet({
 
         {title ? (
           <div className="flex items-center justify-between gap-3 px-5 pb-2">
-            <p id={titleId} className="font-display text-[16px] font-semibold tracking-tight">
+            <p id={titleId} className="type-card-title">
               {title}
             </p>
             <button

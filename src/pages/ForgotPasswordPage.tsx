@@ -35,10 +35,10 @@ export function ForgotPasswordPage() {
       <DemoBanner />
       <SetupBanner />
       <main className="page-enter mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
-        <p className="font-display text-[22px] font-bold tracking-tight text-ink">
+        <p className="type-login-title text-ink">
           Reset password
         </p>
-        <p className="mt-2 text-[13px] text-muted">
+        <p className="mt-2 type-body text-muted">
           Enter the email for your account. We will send a reset link if it exists.
         </p>
 
@@ -62,7 +62,7 @@ export function ForgotPasswordPage() {
           </Button>
         </form>
 
-        <Link to="/login" className="mt-8 text-[13px] text-accent">
+        <Link to="/login" className="mt-8 type-body text-accent">
           Back to sign in
         </Link>
       </main>

@@ -23,10 +23,8 @@ export function AppShell() {
           <div className="flex items-center gap-2.5 px-2">
             <AppLogo className="size-10 rounded-xl" />
             <div>
-              <p className="font-display text-[18px] font-bold tracking-tight">
-                Lalitamba FD
-              </p>
-              <p className="text-[12px] text-muted">Gadag</p>
+              <p className="type-app-bar">Lalitamba FD</p>
+              <p className="type-small">Gadag</p>
             </div>
           </div>
           <nav className="mt-8 flex flex-col gap-1">
@@ -37,7 +35,7 @@ export function AppShell() {
                 end={tab.end}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-2 rounded-xl px-2 py-2 text-[13.5px] font-medium',
+                    'type-body flex items-center gap-2 rounded-xl px-2 py-2 font-medium',
                     isActive ? 'bg-surface text-accent' : 'text-muted hover:text-ink',
                   )
                 }
@@ -66,7 +64,7 @@ export function AppShell() {
               end={tab.end}
               className={({ isActive }) =>
                 cn(
-                  'relative flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium',
+                  'type-micro relative flex flex-col items-center gap-1 py-2.5 font-medium',
                   isActive ? 'text-accent' : 'text-muted',
                 )
               }

@@ -114,8 +114,8 @@ export function FdFormPage() {
   if ((!isNew || isRenew) && !fd) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">Deposit not found, or you cannot see it.</p>
-        <Link to="/fds" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">Deposit not found, or you cannot see it.</p>
+        <Link to="/fds" className="mt-4 inline-block type-body text-accent">
           Back to FDs
         </Link>
       </Page>
@@ -125,10 +125,10 @@ export function FdFormPage() {
   if (isRenew && fd && !canLifecycle(fd)) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">
+        <p className="type-body text-muted">
           This deposit is {fd.status}. Only an active or matured FD can be renewed.
         </p>
-        <Link to={`/fds/${fd.id}`} className="mt-4 inline-block text-[13px] text-accent">
+        <Link to={`/fds/${fd.id}`} className="mt-4 inline-block type-body text-accent">
           Back to deposit
         </Link>
       </Page>
@@ -138,10 +138,10 @@ export function FdFormPage() {
   if (isRenew && existingRenewal) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">This deposit is already renewed.</p>
+        <p className="type-body text-muted">This deposit is already renewed.</p>
         <Link
           to={`/fds/${existingRenewal.new_fd_id}`}
-          className="mt-4 inline-block text-[13px] text-accent"
+          className="mt-4 inline-block type-body text-accent"
         >
           Open the new FD
         </Link>
@@ -152,8 +152,8 @@ export function FdFormPage() {
   if (!canWrite) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">You cannot edit deposits.</p>
-        <Link to="/fds" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">You cannot edit deposits.</p>
+        <Link to="/fds" className="mt-4 inline-block type-body text-accent">
           Back to FDs
         </Link>
       </Page>
@@ -163,8 +163,8 @@ export function FdFormPage() {
   if (household.members.length === 0) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">Add a member before creating an FD.</p>
-        <Link to="/members/new" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">Add a member before creating an FD.</p>
+        <Link to="/members/new" className="mt-4 inline-block type-body text-accent">
           Add member
         </Link>
       </Page>
@@ -459,21 +459,27 @@ function FdForm({
   return (
     <Page>
       <BackLink to={previous ? `/fds/${previous.id}` : fd ? `/fds/${fd.id}` : '/fds'} />
-      <h1 className="mt-4 font-display text-[20px] font-bold tracking-tight">
+      <h1 className="mt-4 type-page-title">
         {isRenew ? 'Renew FD' : isNew ? 'Add FD' : 'Edit FD'}
       </h1>
       {previous ? (
-        <p className="mt-2 text-[13px] text-muted">
-          Renewing {previous.fd_account_no ?? 'this FD'} · {formatInr(previous.principal_amount)}
-          {carry !== null ? ` · carry ${formatInr(carry)}` : ''}
+        <p className="mt-2 type-body text-muted">
+          Renewing {previous.fd_account_no ?? 'this FD'} ·{' '}
+          <span className="type-num">{formatInr(previous.principal_amount)}</span>
+          {carry !== null ? (
+            <>
+              {' · carry '}
+              <span className="type-num">{formatInr(carry)}</span>
+            </>
+          ) : null}
         </p>
       ) : (
-        <p className="mt-2 text-[13px] text-muted">
+        <p className="mt-2 type-body text-muted">
           Photograph the certificate. Reading the slip fills the fields — check them
           before you save. OCR never writes the FD by itself.
         </p>
       )}
-      {carryNote ? <p className="mt-2 text-[13px] text-muted">{carryNote}</p> : null}
+      {carryNote ? <p className="mt-2 type-body text-muted">{carryNote}</p> : null}
 
       <form className="mt-8 space-y-5 pb-8" onSubmit={(event) => void onSubmit(event)}>
         <ReceiptPicker
@@ -495,12 +501,12 @@ function FdForm({
           </Button>
         ) : null}
         {ocrMessage && !reading ? (
-          <p className="text-[13px] text-muted" role="status">
+          <p className="type-body text-muted" role="status">
             {ocrMessage}
           </p>
         ) : null}
         {ocrWarnings.map((warning) => (
-          <p key={warning} className="text-[13px] text-warn">
+          <p key={warning} className="type-body text-warn">
             {warning}
           </p>
         ))}
@@ -730,7 +736,7 @@ function FdForm({
         {previewChecks.length > 0 ? (
           <ul className="space-y-2">
             {previewChecks.map((message) => (
-              <li key={message} className="text-[13px] text-warn">
+              <li key={message} className="type-body text-warn">
                 {message}
               </li>
             ))}

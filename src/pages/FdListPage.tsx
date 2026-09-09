@@ -139,7 +139,7 @@ export function FdListPage() {
         action={canWrite && hasMembers ? <AddIconLink to="/fds/new" label="Add FD" /> : null}
       />
 
-      <p className="mt-3 text-[13px] text-muted">
+      <p className="mt-3 type-body text-muted">
         {intro}
         {filtered ? (
           <>
@@ -252,8 +252,8 @@ export function FdListPage() {
 
       {household && household.families.length === 0 ? (
         <div className="surface-card mt-8 p-5">
-          <p className="text-[13.5px] font-medium text-ink">No family yet.</p>
-          <p className="mt-2 text-[13px] text-muted">Create a family before adding deposits.</p>
+          <p className="type-card-title text-ink">No family yet.</p>
+          <p className="mt-2 type-body text-muted">Create a family before adding deposits.</p>
           <Button asChild className="mt-6" size="lg">
             <Link to="/members/new">Create family</Link>
           </Button>
@@ -262,8 +262,8 @@ export function FdListPage() {
 
       {household && household.families.length > 0 && !hasMembers ? (
         <div className="surface-card mt-8 p-5">
-          <p className="text-[13.5px] font-medium text-ink">No members yet.</p>
-          <p className="mt-2 text-[13px] text-muted">
+          <p className="type-card-title text-ink">No members yet.</p>
+          <p className="mt-2 type-body text-muted">
             Every FD belongs to a person. Add someone first.
           </p>
           <Button asChild className="mt-6" size="lg">
@@ -279,7 +279,7 @@ export function FdListPage() {
       </div>
 
       {hasMembers && rows.length === 0 ? (
-        <p className="mt-8 text-[13px] text-muted">{empty}</p>
+        <p className="mt-8 type-body text-muted">{empty}</p>
       ) : null}
     </Page>
   )
@@ -307,15 +307,16 @@ function MemberFdGroup({
         onClick={() => setOpen((value) => !value)}
         className="flex w-full items-center gap-3 rounded-xl py-1 text-left"
       >
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-inner text-[10px] font-semibold text-ink">
+        <span className="type-micro flex size-7 shrink-0 items-center justify-center rounded-lg bg-inner font-semibold text-ink">
           {initials(group.name)}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13.5px] font-medium text-ink">{group.name}</span>
-          <span className="mt-0.5 block text-[12px] text-muted">
-            {group.fds.length} {group.fds.length === 1 ? 'FD' : 'FDs'}
+          <span className="block truncate type-card-title text-ink">{group.name}</span>
+          <span className="type-small mt-0.5 block">
+            <span className="type-num">{group.fds.length}</span>{' '}
+            {group.fds.length === 1 ? 'FD' : 'FDs'}
             {' · '}
-            {formatInr(principal)}
+            <span className="type-num">{formatInr(principal)}</span>
           </span>
         </span>
         <ChevronIcon
@@ -377,7 +378,7 @@ function FdRow({
       to={`/fds/${fd.id}`}
       title={fd.fd_account_no ?? 'FD'}
       subtitle={`${closedLabel ?? when}${dueThisMonth ? ' · Due this month' : ''} · ${formatInterestMode(fd.interest_mode)}`}
-      trailing={<span className="font-mono text-[13px]">{trailing}</span>}
+      trailing={<span className="type-list-value">{trailing}</span>}
       muted={quiet}
       tone={tone}
     />

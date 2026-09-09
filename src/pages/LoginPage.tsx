@@ -66,10 +66,10 @@ export function LoginPage() {
       <SetupBanner />
       <main className="page-enter mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
         <AppLogo className="size-16" />
-        <p className="mt-4 font-display text-[22px] font-bold tracking-tight text-ink">
+        <p className="mt-4 type-login-title text-ink">
           Lalitamba FD Gadag
         </p>
-        <p className="mt-2 text-[13px] text-muted">
+        <p className="mt-2 type-body text-muted">
           Sign in to the family ledger. New accounts wait for admin approval.
         </p>
 
@@ -108,7 +108,7 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-3 pt-1">
-            <Link to="/forgot-password" className="block text-right text-[13px] text-accent">
+            <Link to="/forgot-password" className="block text-right type-body text-accent">
               Forgot password?
             </Link>
 
@@ -127,7 +127,7 @@ export function LoginPage() {
           </div>
         </form>
 
-        <p className="mt-8 text-[12px] leading-relaxed text-muted">
+        <p className="mt-8 type-small leading-relaxed">
           Access is limited to your family. Admins see everything.
           {mode === 'demo' ? (
             <>

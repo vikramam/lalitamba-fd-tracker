@@ -26,8 +26,8 @@ export function FamilyFormPage() {
   if (!isNew && !family) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">Family not found, or you cannot see it.</p>
-        <Link to="/settings/families" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">Family not found, or you cannot see it.</p>
+        <Link to="/settings/families" className="mt-4 inline-block type-body text-accent">
           Back to family
         </Link>
       </Page>
@@ -37,8 +37,8 @@ export function FamilyFormPage() {
   if (!canManage) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">You cannot manage families.</p>
-        <Link to="/settings/families" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">You cannot manage families.</p>
+        <Link to="/settings/families" className="mt-4 inline-block type-body text-accent">
           Back to family
         </Link>
       </Page>
@@ -97,11 +97,11 @@ function FamilyForm({
   return (
     <Page>
       <BackLink to="/settings/families" />
-      <h1 className="mt-4 font-display text-[20px] font-bold tracking-tight">
+      <h1 className="mt-4 type-page-title">
         {isNew ? 'Add family' : 'Edit family'}
       </h1>
       {household.families.length > 0 && isNew ? (
-        <p className="mt-2 text-[13px] text-muted">
+        <p className="mt-2 type-body text-muted">
           People and FDs you add next can sit under this family.
         </p>
       ) : null}

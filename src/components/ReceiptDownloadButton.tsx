@@ -21,7 +21,7 @@ export function ReceiptDownloadButton({
     <button
       type="button"
       disabled={busy}
-      className={cn('text-[13px] text-accent disabled:opacity-50', className)}
+      className={cn('type-body text-accent disabled:opacity-50', className)}
       onClick={() => {
         void (async () => {
           setBusy(true)

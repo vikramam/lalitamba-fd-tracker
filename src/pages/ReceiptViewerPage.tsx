@@ -45,8 +45,8 @@ export function ReceiptViewerPage() {
   if (!fd || !receipt) {
     return (
       <main className="fixed inset-0 z-20 flex flex-col items-center justify-center bg-canvas px-5">
-        <p className="text-[13px] text-muted">You don't have access</p>
-        <Link to={fd ? `/fds/${fd.id}` : '/fds'} className="mt-4 text-[13px] text-accent">
+        <p className="type-body text-muted">You don't have access</p>
+        <Link to={fd ? `/fds/${fd.id}` : '/fds'} className="mt-4 type-body text-accent">
           Back
         </Link>
       </main>
@@ -58,10 +58,10 @@ export function ReceiptViewerPage() {
   return (
     <main className="fixed inset-0 z-20 flex flex-col bg-canvas">
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
-        <Link to={`/fds/${fd.id}`} className="shrink-0 text-[13px] text-muted">
+        <Link to={`/fds/${fd.id}`} className="shrink-0 type-body text-muted">
           Back
         </Link>
-        <p className="min-w-0 truncate font-mono text-[12px] text-ink">{receipt.file_name}</p>
+        <p className="type-small type-num min-w-0 truncate text-ink">{receipt.file_name}</p>
         <div className="flex shrink-0 items-center gap-3">
           <ReceiptShareButton receipt={receipt} household={household} />
           <ReceiptDownloadButton receipt={receipt} household={household} />

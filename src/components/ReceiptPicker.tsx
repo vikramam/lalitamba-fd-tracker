@@ -54,7 +54,7 @@ export function ReceiptPicker({
 
   return (
     <div className="surface-card space-y-3 p-4">
-      <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+      <p className="type-label">
         Receipt
       </p>
       <div className="grid grid-cols-2 gap-3">
@@ -77,7 +77,7 @@ export function ReceiptPicker({
           From gallery
         </Button>
       </div>
-      <p className="text-[12px] text-muted">
+      <p className="type-small">
         Rear camera or a photo already on this phone. Photos are compressed here;
         HEIF becomes JPEG.
       </p>
@@ -122,22 +122,22 @@ export function ReceiptPicker({
           ) : (
             <div className="flex items-center gap-3">
               {busy ? <SpinnerIcon className="size-5 text-accent" /> : null}
-              <p className="text-[13px] text-ink">{value.file.name}</p>
+              <p className="type-body text-ink">{value.file.name}</p>
             </div>
           )}
-          <p className="mt-2 font-mono text-[11px] text-muted">{value.originalName}</p>
-          <p className="mt-1 text-[12px] text-muted">
+          <p className="mt-2 type-micro type-num text-muted">{value.originalName}</p>
+          <p className="type-small type-num mt-1">
             {value.originalSize > value.file.size
               ? `Compressed ${formatFileSize(value.originalSize)} → ${formatFileSize(value.file.size)}`
               : formatFileSize(value.file.size)}
           </p>
           {!value.previewUrl && busy ? (
-            <p className="mt-2 text-[13px] text-muted">{busyLabel}</p>
+            <p className="mt-2 type-body text-muted">{busyLabel}</p>
           ) : null}
           {busy ? null : (
             <button
               type="button"
-              className="mt-2 text-[13px] text-accent"
+              className="mt-2 type-body text-accent"
               onClick={() => {
                 if (value.previewUrl) URL.revokeObjectURL(value.previewUrl)
                 onChange(null)
@@ -148,7 +148,7 @@ export function ReceiptPicker({
           )}
         </div>
       ) : existing ? (
-        <p className="text-[13px] text-muted">
+        <p className="type-body text-muted">
           Current file: {existing.file_name}. Choosing a new one replaces it.
         </p>
       ) : null}
@@ -166,7 +166,7 @@ function ReceiptBusy({ label, compact = false }: { label: string; compact?: bool
         aria-live="polite"
       >
         <SpinnerIcon className="size-7 text-accent" />
-        <p className="text-[13px] font-semibold text-ink">{label}</p>
+        <p className="type-body font-semibold text-ink">{label}</p>
       </div>
     )
   }
@@ -176,7 +176,7 @@ function ReceiptBusy({ label, compact = false }: { label: string; compact?: bool
       <Shimmer className="min-h-32 w-full rounded-2xl" />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
         <SpinnerIcon className="size-8 text-accent" />
-        <p className="text-[13px] font-semibold text-ink">{label}</p>
+        <p className="type-body font-semibold text-ink">{label}</p>
       </div>
     </div>
   )

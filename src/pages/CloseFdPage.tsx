@@ -42,8 +42,8 @@ export function CloseFdPage() {
   if (!fd) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">Deposit not found, or you cannot see it.</p>
-        <Link to="/fds" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">Deposit not found, or you cannot see it.</p>
+        <Link to="/fds" className="mt-4 inline-block type-body text-accent">
           Back to FDs
         </Link>
       </Page>
@@ -53,14 +53,14 @@ export function CloseFdPage() {
   if (!canWrite || !canLifecycle(fd) || existing || renewal) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">
+        <p className="type-body text-muted">
           {existing
             ? 'This deposit is already closed.'
             : renewal
               ? 'A renewed FD cannot be closed.'
               : 'Only an active or matured FD can be closed.'}
         </p>
-        <Link to={`/fds/${fd.id}`} className="mt-4 inline-block text-[13px] text-accent">
+        <Link to={`/fds/${fd.id}`} className="mt-4 inline-block type-body text-accent">
           Back to deposit
         </Link>
       </Page>
@@ -110,9 +110,10 @@ export function CloseFdPage() {
   return (
     <Page>
       <BackLink to={`/fds/${fd.id}`} />
-      <h1 className="mt-4 font-display text-[20px] font-bold tracking-tight">Close FD</h1>
-      <p className="mt-2 text-[13px] text-muted">
-        {fd.fd_account_no ?? 'This deposit'} · {formatInr(fd.principal_amount)}. The
+      <h1 className="mt-4 type-page-title">Close FD</h1>
+      <p className="mt-2 type-body text-muted">
+        {fd.fd_account_no ?? 'This deposit'} ·{' '}
+        <span className="type-num">{formatInr(fd.principal_amount)}</span>. The
         original receipt stays on this row. A later fresh deposit is Add FD.
       </p>
 
@@ -151,14 +152,14 @@ export function CloseFdPage() {
         {premature ? (
           <div className="flex items-start gap-2">
             <StatusBadge tone="danger">Premature</StatusBadge>
-            <p className="text-[13px] text-danger">
+            <p className="type-body text-danger">
               The society may pay less than principal.
             </p>
           </div>
         ) : (
-          <p className="text-[13px] text-muted">Closing at or after maturity.</p>
+          <p className="type-body text-muted">Closing at or after maturity.</p>
         )}
-        {amountNote ? <p className="text-[13px] text-warn">{amountNote}</p> : null}
+        {amountNote ? <p className="type-body text-warn">{amountNote}</p> : null}
 
         <div className="sticky bottom-20 space-y-3 bg-canvas pt-4 md:bottom-0">
           <Button type="submit" size="lg" disabled={saving}>

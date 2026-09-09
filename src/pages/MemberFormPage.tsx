@@ -28,8 +28,8 @@ export function MemberFormPage() {
   if (!isNew && !member) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">Member not found, or you cannot see them.</p>
-        <Link to="/members" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">Member not found, or you cannot see them.</p>
+        <Link to="/members" className="mt-4 inline-block type-body text-accent">
           Back to members
         </Link>
       </Page>
@@ -39,8 +39,8 @@ export function MemberFormPage() {
   if (!canManage) {
     return (
       <Page>
-        <p className="text-[13px] text-muted">You cannot manage members.</p>
-        <Link to="/members" className="mt-4 inline-block text-[13px] text-accent">
+        <p className="type-body text-muted">You cannot manage members.</p>
+        <Link to="/members" className="mt-4 inline-block type-body text-accent">
           Back to members
         </Link>
       </Page>
@@ -120,7 +120,7 @@ function MemberForm({
   return (
     <Page>
       <BackLink to="/members" />
-      <h1 className="mt-4 font-display text-[20px] font-bold tracking-tight">
+      <h1 className="mt-4 type-page-title">
         {needsFamily ? 'Create family' : isNew ? 'Add member' : 'Edit member'}
       </h1>
 

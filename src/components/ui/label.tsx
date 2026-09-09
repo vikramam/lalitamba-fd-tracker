@@ -10,7 +10,7 @@ function Label({
   return (
     <LabelPrimitive.Root
       className={cn(
-        'text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase',
+        'type-label',
         className,
       )}
       {...props}

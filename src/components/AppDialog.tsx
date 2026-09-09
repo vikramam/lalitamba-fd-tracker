@@ -61,10 +61,10 @@ export function AppDialog({
         aria-describedby={messageId}
         className="relative w-full max-w-sm rounded-[20px] border border-line bg-surface p-5 shadow-[var(--card-shadow)]"
       >
-        <p id={titleId} className="font-display text-[16px] font-semibold tracking-tight text-ink">
+        <p id={titleId} className="type-card-title text-ink">
           {title}
         </p>
-        <p id={messageId} className="mt-2 text-[13px] leading-5 text-muted">
+        <p id={messageId} className="type-body mt-2 text-muted">
           {message}
         </p>
         <div className="mt-5 flex gap-2">

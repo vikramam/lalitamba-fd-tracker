@@ -53,9 +53,7 @@ export function SettingsPage() {
       <ScreenTitle eyebrow="Account" title="Settings" />
 
       <section className="mt-6">
-        <p className="mb-3 text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-          Appearance
-        </p>
+        <p className="type-card-title mb-3 text-ink">Appearance</p>
         <ChipGroup>
           {(['dark', 'light'] as const).map((option) => (
             <Chip key={option} selected={theme === option} onClick={() => onTheme(option)}>
@@ -63,9 +61,7 @@ export function SettingsPage() {
             </Chip>
           ))}
         </ChipGroup>
-        <p className="mt-5 mb-3 text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-          Text size
-        </p>
+        <p className="type-card-title mt-5 mb-3 text-ink">Text size</p>
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -77,7 +73,7 @@ export function SettingsPage() {
           >
             A−
           </Button>
-          <p className="min-w-24 text-center text-[13.5px] text-ink" aria-live="polite">
+          <p className="type-body min-w-24 text-center text-ink" aria-live="polite">
             {fontScaleLabel(fontScale)}
           </p>
           <Button
@@ -93,51 +89,49 @@ export function SettingsPage() {
         </div>
       </section>
 
-      <dl className="surface-card mt-6 space-y-4 p-4 text-[13.5px]">
+      <dl className="surface-card mt-6 space-y-4 p-4">
         <div>
-          <dt className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <dt className="type-label">
             Email
           </dt>
-          <dd className="mt-1 font-mono text-[13px] text-ink">{user?.email}</dd>
+          <dd className="type-body mt-1 text-ink">{user?.email}</dd>
         </div>
         <div>
-          <dt className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <dt className="type-label">
             Role
           </dt>
-          <dd className="mt-1 text-ink">
+          <dd className="type-body mt-1 text-ink">
             {household?.isSuperAdmin
               ? 'Super admin'
               : household?.isAppAdmin
-              ? 'App admin'
-              : household?.families[0]?.role === 'family_admin'
-                ? 'Family admin'
-                : needsFamily
-                  ? 'No family yet'
-                  : 'Member'}
+                ? 'App admin'
+                : household?.families[0]?.role === 'family_admin'
+                  ? 'Family admin'
+                  : needsFamily
+                    ? 'No family yet'
+                    : 'Member'}
           </dd>
         </div>
         <div>
-          <dt className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <dt className="type-label">
             Family
           </dt>
-          <dd className="mt-1 text-ink">
+          <dd className="type-body mt-1 text-ink">
             {household?.families.map((family) => family.name).join(', ') || 'None'}
           </dd>
         </div>
         <div>
-          <dt className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <dt className="type-label">
             Mode
           </dt>
-          <dd className="mt-1 text-ink">{mode === 'demo' ? 'Demo' : 'Supabase'}</dd>
+          <dd className="type-body mt-1 text-ink">{mode === 'demo' ? 'Demo' : 'Supabase'}</dd>
         </div>
       </dl>
 
       {household?.isAppAdmin ? (
         <section className="surface-card mt-6 space-y-4 p-4">
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-            Accounts
-          </p>
-          <p className="text-[13px] text-muted">
+          <p className="type-card-title text-ink">Accounts</p>
+          <p className="type-body text-muted">
             Approve new sign-ups, reject or delete accounts
             {household.isSuperAdmin ? ', and make or remove admins' : ''}.
           </p>
@@ -149,10 +143,8 @@ export function SettingsPage() {
 
       {household && canManage ? (
         <section className="surface-card mt-6 space-y-4 p-4">
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-            Family
-          </p>
-          <p className="text-[13px] text-muted">
+          <p className="type-card-title text-ink">Family</p>
+          <p className="type-body text-muted">
             Add or edit a family so people and FDs have a home.
           </p>
           <Button asChild variant="outline" size="lg">
@@ -163,10 +155,8 @@ export function SettingsPage() {
 
       {household ? (
         <section className="surface-card mt-6 space-y-4 p-4">
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-            Export
-          </p>
-          <p className="text-[13px] text-muted">
+          <p className="type-card-title text-ink">Export</p>
+          <p className="type-body text-muted">
             Download every person and deposit you can see, plus closures, renewals, and
             receipt file names.
           </p>
@@ -192,10 +182,8 @@ export function SettingsPage() {
 
       {canClear ? (
         <section className="surface-card mt-6 space-y-4 p-4">
-          <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-            Testing
-          </p>
-          <p className="text-[13px] text-muted">
+          <p className="type-card-title text-ink">Testing</p>
+          <p className="type-body text-muted">
             Deletes every deposit, OCR run, and receipt file. Family members stay.
             Type DELETE to confirm.
           </p>

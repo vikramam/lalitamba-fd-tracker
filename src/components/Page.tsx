@@ -30,12 +30,8 @@ export function ScreenTitle({
   return (
     <div className="flex items-center justify-between gap-3">
       <div>
-        <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
-          {eyebrow}
-        </p>
-        <h1 className="mt-1 font-display text-[20px] font-bold tracking-tight text-ink">
-          {title}
-        </h1>
+        <p className="type-label">{eyebrow}</p>
+        <h1 className="type-page-title mt-1 text-ink">{title}</h1>
       </div>
       {action}
     </div>
@@ -62,7 +58,7 @@ export function BackLink({
   children?: ReactNode
 }) {
   return (
-    <Link to={to} className="text-[13px] text-muted">
+    <Link to={to} className="type-body text-muted">
       {children}
     </Link>
   )

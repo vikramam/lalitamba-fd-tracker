@@ -19,7 +19,7 @@ export function Chip({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'rounded-xl px-[15px] py-[9px] text-[12.5px] font-semibold disabled:opacity-50',
+        'rounded-xl px-[15px] py-[9px] text-[12.5px] font-bold normal-case disabled:opacity-50',
         selected
           ? 'brand-gradient'
           : 'border border-line bg-surface text-[color:var(--chip-text)]',
