@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { replaceDemoReceipt, resetDemoStore } from '@/lib/demo-store'
+import { deleteFd } from '@/lib/fds'
 import { demoHousehold } from '@/lib/household'
 import { DEMO_IDS } from '@/lib/ids'
 import { assertReceiptFile, isHeifFile, isPdfFile, prepareReceiptFile } from '@/lib/receipt-file'
@@ -130,5 +131,29 @@ describe('receipt replacement and isolation', () => {
     await expect(receiptViewUrl(receipt!, other)).rejects.toThrow("You don't have access")
     await expect(downloadFdReceipt(receipt!, other)).rejects.toThrow("You don't have access")
     await expect(shareFdReceipt(receipt!, other)).rejects.toThrow("You don't have access")
+  })
+})
+
+describe('deleteFd', () => {
+  it('removes the deposit and its receipt from the household', async () => {
+    replaceDemoReceipt({
+      family_id: DEMO_IDS.mulgundFamily,
+      fd_id: DEMO_IDS.fd40599,
+      storage_path: `${DEMO_IDS.mulgundFamily}/r.jpg`,
+      file_name: 'slip.jpg',
+      mime_type: 'image/jpeg',
+      file_size: 20,
+      uploaded_by: DEMO_IDS.vikram,
+    })
+    const before = demoHousehold('vikram@family.test')
+    const fd = before.deposits.find((row) => row.id === DEMO_IDS.fd40599)
+    expect(fd).toBeDefined()
+    expect(currentReceipt(before.receipts, DEMO_IDS.fd40599)?.file_name).toBe('slip.jpg')
+
+    await deleteFd(fd!)
+
+    const after = demoHousehold('vikram@family.test')
+    expect(after.deposits.map((row) => row.id)).not.toContain(DEMO_IDS.fd40599)
+    expect(after.receipts.filter((row) => row.fd_id === DEMO_IDS.fd40599)).toHaveLength(0)
   })
 })

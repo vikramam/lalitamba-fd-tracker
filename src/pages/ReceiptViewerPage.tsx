@@ -4,12 +4,14 @@ import { Link, useParams } from 'react-router-dom'
 import { ReceiptDownloadButton } from '@/components/ReceiptDownloadButton'
 import { ReceiptShareButton } from '@/components/ReceiptShareButton'
 import { Shimmer, ShimmerReceiptViewer } from '@/components/Shimmer'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { currentReceipt, receiptViewUrl } from '@/lib/receipts'
 
 export function ReceiptViewerPage() {
   const { fdId } = useParams()
   const { household, loading } = useHousehold()
+  const { alert } = useDialog()
   const fd = household?.deposits.find((row) => row.id === fdId)
   const receipt = household && fdId ? currentReceipt(household.receipts, fdId) : null
   const [signed, setSigned] = useState<{ url?: string; error?: string }>({})
@@ -23,15 +25,15 @@ export function ReceiptViewerPage() {
       })
       .catch((cause) => {
         if (!cancelled) {
-          setSigned({
-            error: cause instanceof Error ? cause.message : "You don't have access",
-          })
+          const message = cause instanceof Error ? cause.message : "You don't have access"
+          setSigned({ error: message })
+          void alert('Receipt', message)
         }
       })
     return () => {
       cancelled = true
     }
-  }, [household, receipt])
+  }, [alert, household, receipt])
 
   const url = receipt?.preview_url ?? signed.url
   const error = signed.error
@@ -65,12 +67,6 @@ export function ReceiptViewerPage() {
           <ReceiptDownloadButton receipt={receipt} household={household} />
         </div>
       </div>
-
-      {error ? (
-        <p className="px-5 py-3 text-[13px] text-danger" role="alert">
-          {error}
-        </p>
-      ) : null}
 
       {!url && !error ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-6">

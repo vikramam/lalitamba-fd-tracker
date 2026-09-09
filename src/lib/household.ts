@@ -5,6 +5,9 @@ import {
   demoMemberships,
 } from '@/lib/demo-data'
 import {
+  readDeletedDemoFamilyIds,
+  readDeletedDemoFdIds,
+  readDeletedDemoMemberIds,
   readDemoClosures,
   readDemoDeposits,
   readDemoFamilies,
@@ -73,13 +76,24 @@ export function demoHousehold(email: string): Household {
   const extraFamilies = readDemoFamilies()
   const extraMembers = readDemoMembers()
   const extraDeposits = readDemoDeposits()
-  const allReceipts = readDemoReceipts()
-  const allRenewals = readDemoRenewals()
-  const allClosures = readDemoClosures()
-  const allReviews = readDemoReviews()
-  const allFamilies = mergeById(demoFamilies, extraFamilies)
-  const allMembers = mergeById(demoMembers, extraMembers)
-  const allDeposits = mergeById(demoDeposits, extraDeposits)
+  const deletedFds = new Set(readDeletedDemoFdIds())
+  const allReceipts = readDemoReceipts().filter((row) => !deletedFds.has(row.fd_id))
+  const allRenewals = readDemoRenewals().filter(
+    (row) => !deletedFds.has(row.previous_fd_id) && !deletedFds.has(row.new_fd_id),
+  )
+  const allClosures = readDemoClosures().filter((row) => !deletedFds.has(row.fd_id))
+  const allReviews = readDemoReviews().filter((row) => !deletedFds.has(row.fd_id))
+  const deletedFamilies = new Set(readDeletedDemoFamilyIds())
+  const allFamilies = mergeById(demoFamilies, extraFamilies).filter(
+    (family) => !deletedFamilies.has(family.id),
+  )
+  const deletedMembers = new Set(readDeletedDemoMemberIds())
+  const allMembers = mergeById(demoMembers, extraMembers).filter(
+    (member) => !deletedMembers.has(member.id),
+  )
+  const allDeposits = mergeById(demoDeposits, extraDeposits).filter(
+    (fd) => !deletedFds.has(fd.id),
+  )
 
   if (demo.isAppAdmin) {
     return householdFromRows(

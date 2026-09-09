@@ -1,16 +1,17 @@
 import { Children, useEffect, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { PencilIcon, RenewIcon, StopIcon } from '@/components/icons'
+import { PencilIcon, RenewIcon, StopIcon, TrashIcon } from '@/components/icons'
 import { Page } from '@/components/Page'
 import { ReceiptDownloadButton } from '@/components/ReceiptDownloadButton'
 import { ReceiptShareButton } from '@/components/ReceiptShareButton'
 import { ShimmerDetailPage } from '@/components/Shimmer'
 import { StatusBadge } from '@/components/StatusBadge'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { interestCreditedToDate } from '@/lib/dashboard'
 import { fdCheckMessages } from '@/lib/fd-checks'
-import { canWriteFds } from '@/lib/fds'
+import { canDeleteFds, canWriteFds, deleteFd } from '@/lib/fds'
 import { formatDate, formatFileSize, formatInr, formatInterestMode, formatStatus, paysOutInterest } from '@/lib/format'
 import { canLifecycle, carryMessage, findRenewalFor, renewalChain } from '@/lib/lifecycle'
 import { currentReceipt, receiptViewUrl } from '@/lib/receipts'
@@ -53,6 +54,13 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   )
 }
 
+function actionClass(tone: 'default' | 'danger' = 'default') {
+  return cn(
+    'surface-card flex flex-1 flex-col items-center gap-0.5 px-1.5 py-1.5 text-[10px] font-semibold disabled:opacity-50',
+    tone === 'danger' ? 'text-danger' : 'text-ink',
+  )
+}
+
 function ActionLink({
   to,
   label,
@@ -65,16 +73,31 @@ function ActionLink({
   tone?: 'default' | 'danger'
 }) {
   return (
-    <Link
-      to={to}
-      className={cn(
-        'surface-card flex flex-1 flex-col items-center gap-0.5 px-1.5 py-1.5 text-[10px] font-semibold',
-        tone === 'danger' ? 'text-danger' : 'text-ink',
-      )}
-    >
+    <Link to={to} className={actionClass(tone)}>
       {icon}
       {label}
     </Link>
+  )
+}
+
+function ActionButton({
+  label,
+  icon,
+  tone = 'default',
+  disabled,
+  onClick,
+}: {
+  label: string
+  icon: ReactNode
+  tone?: 'default' | 'danger'
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button type="button" disabled={disabled} onClick={onClick} className={actionClass(tone)}>
+      {icon}
+      {label}
+    </button>
   )
 }
 
@@ -130,7 +153,10 @@ function HolderDetails({
 
 export function FdDetailPage() {
   const { fdId } = useParams()
-  const { household, loading } = useHousehold()
+  const navigate = useNavigate()
+  const { household, loading, reload } = useHousehold()
+  const { confirm, alertError } = useDialog()
+  const [deleting, setDeleting] = useState(false)
   const fd = household?.deposits.find((row) => row.id === fdId)
   const member = household?.members.find((row) => row.id === fd?.family_member_id)
   const receipt = household && fd ? currentReceipt(household.receipts, fd.id) : null
@@ -165,6 +191,28 @@ export function FdDetailPage() {
   }
 
   const canEdit = canWrite && fd.status !== 'closed' && fd.status !== 'renewed'
+  const canDelete = canDeleteFds(household, fd.family_id)
+  const deposit = fd
+
+  async function onDelete() {
+    const ok = await confirm({
+      title: 'Delete FD',
+      message: `Delete ${deposit.fd_account_no ?? 'this FD'} and its receipt? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    })
+    if (!ok) return
+    setDeleting(true)
+    try {
+      await deleteFd(deposit)
+      await reload()
+      navigate('/fds')
+    } catch (cause) {
+      await alertError(cause, 'Could not delete that FD.', 'Cannot delete')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <Page>
@@ -210,7 +258,7 @@ export function FdDetailPage() {
         />
       </section>
 
-      {canWrite && (canEdit || canLifecycle(fd)) ? (
+      {canWrite && (canEdit || canLifecycle(fd) || canDelete) ? (
         <div className="mt-3 flex gap-1.5">
           {canEdit ? (
             <ActionLink to={`/fds/${fd.id}/edit`} label="Edit" icon={<PencilIcon className="size-3.5" />} />
@@ -226,9 +274,17 @@ export function FdDetailPage() {
               tone="danger"
             />
           ) : null}
+          {canDelete ? (
+            <ActionButton
+              label={deleting ? '…' : 'Delete'}
+              icon={<TrashIcon className="size-3.5" />}
+              tone="danger"
+              disabled={deleting}
+              onClick={() => void onDelete()}
+            />
+          ) : null}
         </div>
       ) : null}
-
       {closure ? (
         <p className="mt-6 text-[13px] text-muted">
           Received {closure.amount_received === null ? '—' : formatInr(closure.amount_received)}

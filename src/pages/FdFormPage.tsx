@@ -11,6 +11,7 @@ import { PickerAvatar, SheetPicker } from '@/components/SheetPicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import { fdCheckMessages } from '@/lib/fd-checks'
@@ -199,6 +200,7 @@ function FdForm({
 }) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { alert, alertError } = useDialog()
   const members = household.members
   const seed = isRenew ? previous : fd
   const existingReceipt = fd ? currentReceipt(household.receipts, fd.id) : null
@@ -239,7 +241,6 @@ function FdForm({
   const [relationship, setRelationship] = useState(seed?.nominee_relationship ?? '')
   const [status, setStatus] = useState(fd?.status ?? 'active')
   const [notes, setNotes] = useState(isRenew ? '' : (fd?.notes ?? ''))
-  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [receipt, setReceipt] = useState<PreparedReceipt | null>(null)
   const [createdFd, setCreatedFd] = useState(isRenew ? undefined : fd)
@@ -300,12 +301,12 @@ function FdForm({
 
   async function readReceipt(file: File) {
     if (!user) {
-      setOcrMessage('Sign in again.')
+      await alert('Read receipt', 'Sign in again.')
       return
     }
     const familyId = members.find((row) => row.id === memberId)?.family_id
     if (!familyId) {
-      setOcrMessage('Choose a member first.')
+      await alert('Read receipt', 'Choose a member first.')
       return
     }
     setReading(true)
@@ -326,10 +327,10 @@ function FdForm({
           result.message ?? 'Check the extracted fields. Nothing is saved until you tap Save.',
         )
       } else {
-        setOcrMessage(result.message)
+        await alert('Read receipt', result.message ?? 'Could not read the receipt.')
       }
     } catch (cause) {
-      setOcrMessage(cause instanceof Error ? cause.message : 'Could not read the receipt.')
+      await alertError(cause, 'Could not read the receipt.', 'Read receipt')
     } finally {
       setReading(false)
     }
@@ -402,7 +403,6 @@ function FdForm({
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
     setSaving(true)
     try {
       const saved = isRenew && previous
@@ -450,7 +450,7 @@ function FdForm({
       await reload()
       navigate(`/fds/${saved.id}`)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save.')
+      await alertError(cause, 'Could not save.')
     } finally {
       setSaving(false)
     }
@@ -735,12 +735,6 @@ function FdForm({
               </li>
             ))}
           </ul>
-        ) : null}
-
-        {error ? (
-          <p className="text-[13px] text-danger" role="alert">
-            {error}
-          </p>
         ) : null}
 
         <div className="sticky bottom-20 space-y-3 bg-canvas pt-4 md:bottom-0">

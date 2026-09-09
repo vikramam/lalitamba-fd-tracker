@@ -1,10 +1,17 @@
-import { addDemoFamily, addDemoMember, updateDemoFamily, updateDemoMember } from '@/lib/demo-store'
+import {
+  addDemoFamily,
+  addDemoMember,
+  deleteDemoFamily,
+  deleteDemoMember,
+  updateDemoFamily,
+  updateDemoMember,
+} from '@/lib/demo-store'
 import {
   normalizeMemberInput,
   type MemberInput,
 } from '@/lib/member-input'
 import { supabase } from '@/lib/supabase'
-import type { FamilyMember } from '@/lib/types'
+import type { FamilyMember, Household } from '@/lib/types'
 
 export type { MemberInput }
 
@@ -46,6 +53,30 @@ export async function updateFamily(id: string, name: string) {
     .single()
   if (error) throw new Error(error.message)
   return data as { id: string; name: string }
+}
+
+export function familyDeleteError(household: Household, familyId: string) {
+  const people = household.members.filter((row) => row.family_id === familyId).length
+  const fds = household.deposits.filter((row) => row.family_id === familyId).length
+  if (people === 0 && fds === 0) return null
+  const parts = [
+    people > 0 ? `${people} ${people === 1 ? 'person' : 'people'}` : null,
+    fds > 0 ? `${fds} ${fds === 1 ? 'FD' : 'FDs'}` : null,
+  ].filter(Boolean)
+  return `Cannot delete this family. It still has ${parts.join(' and ')}. Move or remove them first.`
+}
+
+export async function deleteFamily(household: Household, familyId: string) {
+  const blocked = familyDeleteError(household, familyId)
+  if (blocked) throw new Error(blocked)
+
+  if (!supabase) {
+    deleteDemoFamily(familyId)
+    return
+  }
+
+  const { error } = await supabase.from('families').delete().eq('id', familyId)
+  if (error) throw new Error(error.message)
 }
 
 export async function createMember(input: MemberInput): Promise<FamilyMember> {
@@ -91,6 +122,25 @@ export async function updateMember(
     .single()
   if (error) throw new Error(error.message)
   return data as FamilyMember
+}
+
+export function memberDeleteError(household: Household, memberId: string) {
+  const fds = household.deposits.filter((row) => row.family_member_id === memberId).length
+  if (fds === 0) return null
+  return `Cannot delete this person. They still have ${fds} ${fds === 1 ? 'FD' : 'FDs'}. Move or remove those first.`
+}
+
+export async function deleteMember(household: Household, memberId: string) {
+  const blocked = memberDeleteError(household, memberId)
+  if (blocked) throw new Error(blocked)
+
+  if (!supabase) {
+    deleteDemoMember(memberId)
+    return
+  }
+
+  const { error } = await supabase.from('family_members').delete().eq('id', memberId)
+  if (error) throw new Error(error.message)
 }
 
 export function canManageMembers(household: {

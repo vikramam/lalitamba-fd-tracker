@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { Chip, ChipGroup } from '@/components/Chip'
@@ -8,6 +8,7 @@ import { AddIconLink, Page, ScreenTitle } from '@/components/Page'
 import { ShimmerListPage } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { daysUntil, interestCreditedToDate, isDueThisMonth } from '@/lib/dashboard'
 import { canWriteFds } from '@/lib/fds'
@@ -25,7 +26,12 @@ import { cn } from '@/lib/utils'
 
 export function FdListPage() {
   const { household, loading, error } = useHousehold()
+  const { alert } = useDialog()
   const [params, setParams] = useSearchParams()
+
+  useEffect(() => {
+    if (error) void alert('Could not load', error)
+  }, [alert, error])
   const [search, setSearch] = useState(params.get('q') ?? '')
   const query: FdListQuery = {
     q: search,
@@ -244,11 +250,6 @@ export function FdListPage() {
         </>
       ) : null}
 
-      {error ? (
-        <p className="mt-6 text-[13px] text-danger" role="alert">
-          {error}
-        </p>
-      ) : null}
       {household && household.families.length === 0 ? (
         <div className="surface-card mt-8 p-5">
           <p className="text-[13.5px] font-medium text-ink">No family yet.</p>

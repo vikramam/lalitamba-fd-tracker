@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label'
 import { DemoBanner } from '@/components/DemoBanner'
 import { SetupBanner } from '@/components/SetupBanner'
 import { ShimmerAuth } from '@/components/Shimmer'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useAuth } from '@/lib/auth'
 
 export function ResetPasswordPage() {
   const { loading, recovery, updatePassword } = useAuth()
+  const { alert } = useDialog()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -26,17 +27,16 @@ export function ResetPasswordPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
     setPending(false)
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      await alert('New password', 'Passwords do not match.')
       return
     }
     setSubmitting(true)
     const result = await updatePassword(password)
     setSubmitting(false)
     if (result.error) {
-      setError(result.error)
+      await alert('New password', result.error)
       return
     }
     if (result.pending) {
@@ -89,11 +89,6 @@ export function ResetPasswordPage() {
               />
             </div>
 
-            {error ? (
-              <p className="text-[13px] text-danger" role="alert">
-                {error}
-              </p>
-            ) : null}
             {pending ? (
               <p className="text-[13px] text-warn" role="status">
                 Password updated. Your account is still pending approval, so you cannot sign in yet.

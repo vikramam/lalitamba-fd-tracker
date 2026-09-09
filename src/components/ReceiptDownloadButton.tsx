@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { useDialog } from '@/hooks/DialogProvider'
 import { downloadFdReceipt } from '@/lib/receipts'
 import type { FdReceipt, Household } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -13,36 +14,28 @@ export function ReceiptDownloadButton({
   household: Household
   className?: string
 }) {
+  const { alertError } = useDialog()
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   return (
-    <span className="inline-flex flex-col items-start gap-1">
-      <button
-        type="button"
-        disabled={busy}
-        className={cn('text-[13px] text-accent disabled:opacity-50', className)}
-        onClick={() => {
-          void (async () => {
-            setError(null)
-            setBusy(true)
-            try {
-              await downloadFdReceipt(receipt, household)
-            } catch (cause) {
-              setError(cause instanceof Error ? cause.message : 'Could not download that receipt.')
-            } finally {
-              setBusy(false)
-            }
-          })()
-        }}
-      >
-        {busy ? 'Downloading…' : 'Download'}
-      </button>
-      {error ? (
-        <span className="text-[12px] text-danger" role="alert">
-          {error}
-        </span>
-      ) : null}
-    </span>
+    <button
+      type="button"
+      disabled={busy}
+      className={cn('text-[13px] text-accent disabled:opacity-50', className)}
+      onClick={() => {
+        void (async () => {
+          setBusy(true)
+          try {
+            await downloadFdReceipt(receipt, household)
+          } catch (cause) {
+            await alertError(cause, 'Could not download that receipt.')
+          } finally {
+            setBusy(false)
+          }
+        })()
+      }}
+    >
+      {busy ? 'Downloading…' : 'Download'}
+    </button>
   )
 }

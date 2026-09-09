@@ -964,3 +964,10 @@ $$;
 grant execute on function public.set_account_approval(uuid, text) to authenticated;
 grant execute on function public.set_app_admin(uuid, boolean) to authenticated;
 grant execute on function public.delete_account(uuid) to authenticated;
+
+-- 0009_delete_family.sql
+drop policy if exists "families_delete" on public.families;
+
+create policy "families_delete"
+  on public.families for delete to authenticated
+  using (public.is_app_admin() or public.is_family_admin(id));

@@ -128,6 +128,17 @@ export function PencilIcon(props: IconProps) {
   )
 }
 
+export function TrashIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M5 7h14" />
+      <path d="M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7" />
+      <path d="M8 7l.6 12.2A1.5 1.5 0 0 0 10.1 20.5h3.8a1.5 1.5 0 0 0 1.5-1.3L16 7" />
+      <path d="M10 11v6M14 11v6" />
+    </Icon>
+  )
+}
+
 export function RenewIcon(props: IconProps) {
   return (
     <Icon {...props}>

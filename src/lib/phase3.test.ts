@@ -11,7 +11,13 @@ import {
 import { demoHousehold } from '@/lib/household'
 import { DEMO_IDS } from '@/lib/ids'
 import { normalizeMemberInput } from '@/lib/member-input'
-import { canManageMembers } from '@/lib/members'
+import {
+  canManageMembers,
+  deleteFamily,
+  deleteMember,
+  familyDeleteError,
+  memberDeleteError,
+} from '@/lib/members'
 import { canResetTestData, resetTestData } from '@/lib/reset-test-data'
 
 const memory = new Map<string, string>()
@@ -143,6 +149,50 @@ describe('household isolation', () => {
     expect(matches).toHaveLength(1)
     expect(matches[0]?.display_name).toBe('Vik')
     expect(matches[0]?.notes).toBe('self')
+  })
+})
+
+describe('deleteFamily', () => {
+  it('refuses a family that still has people or FDs', () => {
+    const household = demoHousehold('vikram@family.test')
+    expect(familyDeleteError(household, DEMO_IDS.mulgundFamily)).toMatch(/person|FD/)
+    return expect(deleteFamily(household, DEMO_IDS.mulgundFamily)).rejects.toThrow(
+      /still has/,
+    )
+  })
+
+  it('deletes an empty family after the check passes', async () => {
+    const family = addDemoFamily('Empty household', DEMO_IDS.vikram)
+    const household = demoHousehold('vikram@family.test')
+    expect(familyDeleteError(household, family.id)).toBeNull()
+    await deleteFamily(household, family.id)
+    expect(demoHousehold('vikram@family.test').families.map((row) => row.id)).not.toContain(
+      family.id,
+    )
+  })
+})
+
+describe('deleteMember', () => {
+  it('refuses a person who still has FDs', () => {
+    const household = demoHousehold('vikram@family.test')
+    expect(memberDeleteError(household, DEMO_IDS.vikramMember)).toMatch(/FD/)
+    return expect(deleteMember(household, DEMO_IDS.vikramMember)).rejects.toThrow(/still have/)
+  })
+
+  it('deletes a person with no FDs after the check passes', async () => {
+    const member = addDemoMember({
+      family_id: DEMO_IDS.mulgundFamily,
+      full_name: 'Empty Person',
+      display_name: null,
+      bank_customer_id: null,
+      notes: null,
+    })
+    const household = demoHousehold('vikram@family.test')
+    expect(memberDeleteError(household, member.id)).toBeNull()
+    await deleteMember(household, member.id)
+    expect(demoHousehold('vikram@family.test').members.map((row) => row.id)).not.toContain(
+      member.id,
+    )
   })
 })
 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { BackLink, Page, ScreenTitle } from '@/components/Page'
 import { ShimmerSettingsPage } from '@/components/Shimmer'
 import { StatusBadge } from '@/components/StatusBadge'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import {
@@ -29,8 +30,8 @@ function roleLabel(account: ManagedAccount) {
 export function AdminAccountsPage() {
   const { user } = useAuth()
   const { household, loading } = useHousehold()
+  const { confirm, alertError } = useDialog()
   const [accounts, setAccounts] = useState<ManagedAccount[]>([])
-  const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const canManage = Boolean(household?.isAppAdmin)
@@ -45,7 +46,7 @@ export function AdminAccountsPage() {
   useEffect(() => {
     if (!user || !canManage) return
     void reloadAccounts().catch((cause) => {
-      setError(cause instanceof Error ? cause.message : 'Could not load accounts.')
+      void alertError(cause, 'Could not load accounts.', 'Could not load')
     })
   }, [user, canManage])
 
@@ -72,13 +73,12 @@ export function AdminAccountsPage() {
   }
 
   async function run(id: string, action: () => Promise<void>) {
-    setError(null)
     setBusyId(id)
     try {
       await action()
       await reloadAccounts()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not update that account.')
+      await alertError(cause, 'Could not update that account.')
     } finally {
       setBusyId(null)
     }
@@ -163,10 +163,16 @@ export function AdminAccountsPage() {
               disabled={working}
               className="text-[13px] text-danger disabled:opacity-50"
               onClick={() => {
-                if (!window.confirm(`Delete ${account.email}? They will not be able to sign in.`)) {
-                  return
-                }
-                void run(account.id, () => deleteManagedAccount(user!.email, account.id))
+                void (async () => {
+                  const ok = await confirm({
+                    title: 'Delete account',
+                    message: `Delete ${account.email}? They will not be able to sign in.`,
+                    confirmLabel: 'Delete',
+                    tone: 'danger',
+                  })
+                  if (!ok) return
+                  await run(account.id, () => deleteManagedAccount(user!.email, account.id))
+                })()
               }}
             >
               Delete
@@ -187,12 +193,6 @@ export function AdminAccountsPage() {
         New sign-ups wait here until you approve them.
         {isSuperAdmin ? ' Only you can make or remove admins.' : ''}
       </p>
-
-      {error ? (
-        <p className="mt-4 text-[13px] text-danger" role="alert">
-          {error}
-        </p>
-      ) : null}
 
       <AccountSection title="Waiting for approval" empty="No one is waiting." rows={groups.pending} />
       <AccountSection title="Rejected" empty="No rejected accounts." rows={groups.rejected} />

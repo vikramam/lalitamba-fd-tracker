@@ -8,6 +8,7 @@ import { ShimmerFormPage } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import { canManageMembers, createFamily, createMember, updateMember } from '@/lib/members'
@@ -72,6 +73,7 @@ function MemberForm({
 }) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { alertError } = useDialog()
   const needsFamily = household.families.length === 0
 
   const [familyId, setFamilyId] = useState(
@@ -82,12 +84,10 @@ function MemberForm({
   const [displayName, setDisplayName] = useState(member?.display_name ?? '')
   const [cid, setCid] = useState(member?.bank_customer_id ?? '')
   const [notes, setNotes] = useState(member?.notes ?? '')
-  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
     setSaving(true)
     try {
       let targetFamily = familyId || household.families[0]?.id || ''
@@ -111,7 +111,7 @@ function MemberForm({
       await reload()
       navigate('/members')
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save.')
+      await alertError(cause, 'Could not save.')
     } finally {
       setSaving(false)
     }
@@ -204,12 +204,6 @@ function MemberForm({
             onChange={(event) => setNotes(event.target.value)}
           />
         </div>
-
-        {error ? (
-          <p className="text-[13px] text-danger" role="alert">
-            {error}
-          </p>
-        ) : null}
 
         <div className="sticky bottom-20 space-y-3 bg-canvas pt-4 md:bottom-0">
           <Button type="submit" size="lg" disabled={saving}>

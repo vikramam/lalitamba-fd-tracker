@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { DemoBanner } from '@/components/DemoBanner'
 import { SetupBanner } from '@/components/SetupBanner'
 import { ShimmerAuth } from '@/components/Shimmer'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useAuth } from '@/lib/auth'
 
 export function LoginPage() {
@@ -16,11 +17,9 @@ export function LoginPage() {
   const from =
     (location.state as { from?: string } | null)?.from ?? '/dashboard'
 
+  const { alert } = useDialog()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(null)
-  const [pending, setPending] = useState<'in' | 'up' | null>(null)
   const [submitting, setSubmitting] = useState<'in' | 'up' | null>(null)
 
   if (loading) {
@@ -36,23 +35,28 @@ export function LoginPage() {
   }
 
   async function authenticate(action: 'in' | 'up') {
-    setError(null)
-    setInfo(null)
-    setPending(null)
     setSubmitting(action)
     const result =
       action === 'in' ? await signIn(email, password) : await signUp(email, password)
     setSubmitting(null)
     if (result.error) {
-      setError(result.error)
+      await alert(action === 'in' ? 'Sign in' : 'Create account', result.error)
       return
     }
     if (result.pending) {
-      setPending(action)
+      await alert(
+        'Pending approval',
+        action === 'up'
+          ? 'Account created. It is pending approval — an admin must approve it before you can sign in.'
+          : 'Your account is pending approval. An admin must approve it before you can sign in.',
+      )
       return
     }
     if (action === 'up' && mode === 'supabase') {
-      setInfo('Check your email to confirm the account, then sign in after an admin approves you.')
+      await alert(
+        'Account created',
+        'Check your email to confirm the account, then sign in after an admin approves you.',
+      )
     }
   }
 
@@ -102,24 +106,6 @@ export function LoginPage() {
               minLength={6}
             />
           </div>
-
-          {pending ? (
-            <p className="text-[13px] text-warn" role="status">
-              {pending === 'up'
-                ? 'Account created. It is pending approval — an admin must approve it before you can sign in.'
-                : 'Your account is pending approval. An admin must approve it before you can sign in.'}
-            </p>
-          ) : null}
-          {error ? (
-            <p className="text-[13px] text-danger" role="alert">
-              {error}
-            </p>
-          ) : null}
-          {info ? (
-            <p className="text-[13px] text-success" role="status">
-              {info}
-            </p>
-          ) : null}
 
           <div className="space-y-3 pt-1">
             <Link to="/forgot-password" className="block text-right text-[13px] text-accent">

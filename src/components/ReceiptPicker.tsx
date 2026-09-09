@@ -1,5 +1,7 @@
 import { useId, useRef, useState } from 'react'
 
+import { useDialog } from '@/hooks/DialogProvider'
+
 import { CameraIcon, PhotoIcon, SpinnerIcon } from '@/components/icons'
 import { Shimmer } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
@@ -27,23 +29,22 @@ export function ReceiptPicker({
   busy?: boolean
   busyLabel?: string
 }) {
+  const { alertError } = useDialog()
   const cameraId = useId()
   const galleryId = useId()
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
-  const [error, setError] = useState<string | null>(null)
   const [preparing, setPreparing] = useState(false)
 
   async function onPick(file: File | undefined) {
     if (!file) return
-    setError(null)
     setPreparing(true)
     try {
       if (value?.previewUrl) URL.revokeObjectURL(value.previewUrl)
       onChange(await prepareReceiptFile(file))
     } catch (cause) {
       onChange(null)
-      setError(cause instanceof Error ? cause.message : 'Could not prepare that photo.')
+      await alertError(cause, 'Could not prepare that photo.')
     } finally {
       setPreparing(false)
       if (cameraRef.current) cameraRef.current.value = ''
@@ -152,11 +153,6 @@ export function ReceiptPicker({
         </p>
       ) : null}
 
-      {error ? (
-        <p className="text-[13px] text-danger" role="alert">
-          {error}
-        </p>
-      ) : null}
     </div>
   )
 }

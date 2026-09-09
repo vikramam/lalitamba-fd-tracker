@@ -6,6 +6,7 @@ import { ShimmerFormPage } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import { canManageMembers, createFamily, updateFamily } from '@/lib/members'
@@ -26,8 +27,8 @@ export function FamilyFormPage() {
     return (
       <Page>
         <p className="text-[13px] text-muted">Family not found, or you cannot see it.</p>
-        <Link to="/settings" className="mt-4 inline-block text-[13px] text-accent">
-          Back to settings
+        <Link to="/settings/families" className="mt-4 inline-block text-[13px] text-accent">
+          Back to family
         </Link>
       </Page>
     )
@@ -37,8 +38,8 @@ export function FamilyFormPage() {
     return (
       <Page>
         <p className="text-[13px] text-muted">You cannot manage families.</p>
-        <Link to="/settings" className="mt-4 inline-block text-[13px] text-accent">
-          Back to settings
+        <Link to="/settings/families" className="mt-4 inline-block text-[13px] text-accent">
+          Back to family
         </Link>
       </Page>
     )
@@ -70,13 +71,12 @@ function FamilyForm({
 }) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { alertError } = useDialog()
   const [name, setName] = useState(initialName)
-  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
     setSaving(true)
     try {
       if (isNew) {
@@ -86,9 +86,9 @@ function FamilyForm({
         await updateFamily(familyId, name)
       }
       await reload()
-      navigate('/settings')
+      navigate('/settings/families')
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save.')
+      await alertError(cause, 'Could not save.')
     } finally {
       setSaving(false)
     }
@@ -96,7 +96,7 @@ function FamilyForm({
 
   return (
     <Page>
-      <BackLink to="/settings" />
+      <BackLink to="/settings/families" />
       <h1 className="mt-4 font-display text-[20px] font-bold tracking-tight">
         {isNew ? 'Add family' : 'Edit family'}
       </h1>
@@ -117,12 +117,6 @@ function FamilyForm({
             placeholder="Mulgund family"
           />
         </div>
-
-        {error ? (
-          <p className="text-[13px] text-danger" role="alert">
-            {error}
-          </p>
-        ) : null}
 
         <div className="sticky bottom-20 space-y-3 bg-canvas pt-4 md:bottom-0">
           <Button type="submit" size="lg" disabled={saving}>

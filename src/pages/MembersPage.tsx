@@ -1,19 +1,52 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { PencilIcon } from '@/components/icons'
+import { PencilIcon, TrashIcon } from '@/components/icons'
 import { AddIconLink, Page, ScreenTitle } from '@/components/Page'
 import { ShimmerListPage } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { formatInr } from '@/lib/format'
 import { initials } from '@/lib/initials'
-import { canManageMembers } from '@/lib/members'
+import { canManageMembers, deleteMember, memberDeleteError } from '@/lib/members'
 
 export function MembersPage() {
-  const { household, loading, error } = useHousehold()
+  const { household, loading, error, reload } = useHousehold()
+  const { alert, confirm, alertError } = useDialog()
   const canManage = household ? canManageMembers(household) : false
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (error) void alert('Could not load', error)
+  }, [alert, error])
 
   if (loading) return <ShimmerListPage />
+
+  async function onDelete(memberId: string, name: string) {
+    if (!household) return
+    const blocked = memberDeleteError(household, memberId)
+    if (blocked) {
+      await alert('Cannot delete', blocked)
+      return
+    }
+    const ok = await confirm({
+      title: 'Delete member',
+      message: `Delete ${name}? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    })
+    if (!ok) return
+    setBusyId(memberId)
+    try {
+      await deleteMember(household, memberId)
+      await reload()
+    } catch (cause) {
+      await alertError(cause, 'Could not delete that person.', 'Cannot delete')
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   return (
     <Page>
@@ -28,12 +61,6 @@ export function MembersPage() {
         Add or edit a family in Settings.
       </p>
 
-      {error ? (
-        <p className="mt-6 text-[13px] text-danger" role="alert">
-          {error}
-        </p>
-      ) : null}
-
       {household && household.families.length === 0 ? (
         <div className="surface-card mt-8 p-5">
           <p className="text-[13.5px] font-medium text-ink">No family yet.</p>
@@ -41,7 +68,7 @@ export function MembersPage() {
             Create a family first so you can add people and their FDs.
           </p>
           <Button asChild className="mt-6" size="lg">
-            <Link to="/settings">Go to Settings</Link>
+            <Link to="/settings/families">Manage family</Link>
           </Button>
         </div>
       ) : null}
@@ -77,13 +104,24 @@ export function MembersPage() {
                 </div>
               </Link>
               {canManage ? (
-                <Link
-                  to={`/members/${member.id}`}
-                  aria-label={`Edit ${member.full_name}`}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-accent"
-                >
-                  <PencilIcon className="size-4" />
-                </Link>
+                <div className="flex shrink-0 items-center">
+                  <Link
+                    to={`/members/${member.id}`}
+                    aria-label={`Edit ${member.full_name}`}
+                    className="flex size-8 items-center justify-center rounded-lg text-accent"
+                  >
+                    <PencilIcon className="size-4" />
+                  </Link>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${member.full_name}`}
+                    disabled={busyId === member.id}
+                    className="flex size-8 items-center justify-center rounded-lg text-danger disabled:opacity-50"
+                    onClick={() => void onDelete(member.id, member.full_name)}
+                  >
+                    <TrashIcon className="size-4" />
+                  </button>
+                </div>
               ) : null}
             </li>
           )

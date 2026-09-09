@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { todayIso } from '@/lib/dashboard'
 import { canWriteFds } from '@/lib/fds'
@@ -23,6 +24,7 @@ export function CloseFdPage() {
   const { fdId } = useParams()
   const navigate = useNavigate()
   const { household, loading, reload } = useHousehold()
+  const { confirm, alertError } = useDialog()
   const fd = household?.deposits.find((row) => row.id === fdId)
   const existing = household?.closures.find((row) => row.fd_id === fdId)
   const renewal = household?.renewals.find((row) => row.previous_fd_id === fdId)
@@ -31,7 +33,6 @@ export function CloseFdPage() {
   const [amount, setAmount] = useState('')
   const [amountTouched, setAmountTouched] = useState(false)
   const [notes, setNotes] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   if (loading || !household) {
@@ -78,7 +79,13 @@ export function CloseFdPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
+    const ok = await confirm({
+      title: 'Close FD',
+      message: `Close ${current.fd_account_no ?? 'this FD'}? This cannot be undone.`,
+      confirmLabel: 'Close',
+      tone: 'danger',
+    })
+    if (!ok) return
     setSaving(true)
     try {
       if (received !== null && !Number.isFinite(received)) {
@@ -94,7 +101,7 @@ export function CloseFdPage() {
       await reload()
       navigate(`/fds/${current.id}`)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not close.')
+      await alertError(cause, 'Could not close.')
     } finally {
       setSaving(false)
     }
@@ -152,12 +159,6 @@ export function CloseFdPage() {
           <p className="text-[13px] text-muted">Closing at or after maturity.</p>
         )}
         {amountNote ? <p className="text-[13px] text-warn">{amountNote}</p> : null}
-
-        {error ? (
-          <p className="text-[13px] text-danger" role="alert">
-            {error}
-          </p>
-        ) : null}
 
         <div className="sticky bottom-20 space-y-3 bg-canvas pt-4 md:bottom-0">
           <Button type="submit" size="lg" disabled={saving}>

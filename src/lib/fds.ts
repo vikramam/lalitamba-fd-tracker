@@ -1,8 +1,8 @@
-import { addDemoFd, updateDemoFd } from '@/lib/demo-store'
+import { addDemoFd, deleteDemoFd, updateDemoFd } from '@/lib/demo-store'
 import { FD_SELECT, mapFixedDeposit } from '@/lib/fd-map'
 import { normalizeFdInput, type FdDraft } from '@/lib/fd-input'
 import { supabase } from '@/lib/supabase'
-import type { FamilyMember, FixedDeposit } from '@/lib/types'
+import type { FamilyMember, FixedDeposit, Household } from '@/lib/types'
 
 function writePayload(row: ReturnType<typeof normalizeFdInput>) {
   return {
@@ -79,4 +79,60 @@ export function canWriteFds(household: {
   families: unknown[]
 }) {
   return household.isAppAdmin || household.families.length > 0
+}
+
+export function canDeleteFds(
+  household: Pick<Household, 'isAppAdmin' | 'families'>,
+  familyId: string,
+) {
+  return (
+    household.isAppAdmin ||
+    household.families.some(
+      (family) =>
+        family.id === familyId &&
+        (family.role === 'family_admin' || family.role === 'app_admin'),
+    )
+  )
+}
+
+export async function deleteFd(fd: FixedDeposit) {
+  if (!supabase) {
+    deleteDemoFd(fd.id)
+    return
+  }
+
+  const [{ data: receipts, error: receiptError }, { data: runs, error: runError }] =
+    await Promise.all([
+      supabase.from('fd_receipts').select('storage_path').eq('fd_id', fd.id),
+      supabase.from('ocr_runs').select('storage_path').eq('fd_id', fd.id),
+    ])
+  if (receiptError) throw new Error(receiptError.message)
+  if (runError) throw new Error(runError.message)
+
+  const paths = [
+    ...new Set(
+      [...(receipts ?? []), ...(runs ?? [])]
+        .map((row) => row.storage_path)
+        .filter((path): path is string => Boolean(path)),
+    ),
+  ]
+  if (paths.length > 0) {
+    const { error: storageError } = await supabase.storage.from('fd-receipts').remove(paths)
+    if (storageError) throw new Error(storageError.message)
+  }
+
+  const related = [
+    supabase.from('ocr_field_reviews').delete().eq('fd_id', fd.id),
+    supabase.from('ocr_runs').delete().eq('fd_id', fd.id),
+    supabase.from('fd_receipts').delete().eq('fd_id', fd.id),
+    supabase.from('fd_closures').delete().eq('fd_id', fd.id),
+    supabase.from('fd_renewals').delete().or(`previous_fd_id.eq.${fd.id},new_fd_id.eq.${fd.id}`),
+  ]
+  for (const request of related) {
+    const { error } = await request
+    if (error) throw new Error(error.message)
+  }
+
+  const { error } = await supabase.from('fixed_deposits').delete().eq('id', fd.id)
+  if (error) throw new Error(error.message)
 }

@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ChevronIcon } from '@/components/icons'
 import { ListRow } from '@/components/ListRow'
 import { Page } from '@/components/Page'
 import { ShimmerDashboard } from '@/components/Shimmer'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import { summarizeDashboard } from '@/lib/dashboard'
@@ -13,6 +14,11 @@ import { formatDate, formatDaysUntil, formatInr, formatInrLakhs, formatInterestM
 export function DashboardPage() {
   const { user } = useAuth()
   const { household, loading, error } = useHousehold()
+  const { alert } = useDialog()
+
+  useEffect(() => {
+    if (error) void alert('Could not load', error)
+  }, [alert, error])
   const firstName = user?.email.split('@')[0] ?? 'there'
   const summary = summarizeDashboard(household?.deposits ?? [], household?.members ?? [])
   const familyLabel = household?.isAppAdmin
@@ -44,12 +50,6 @@ export function DashboardPage() {
           </Link>
         ) : null}
       </section>
-
-      {error ? (
-        <p className="mt-6 text-[13px] text-danger" role="alert">
-          {error}
-        </p>
-      ) : null}
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Stat label="FDs" value={String(summary.activeCount)} to="/fds" />

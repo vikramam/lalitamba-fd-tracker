@@ -7,25 +7,32 @@ import { ShimmerSettingsPage } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import { exportHouseholdExcel } from '@/lib/export-household'
 import { canManageMembers } from '@/lib/members'
 import { canResetTestData, resetTestData } from '@/lib/reset-test-data'
+import {
+  applyFontScale,
+  fontScaleLabel,
+  readFontScale,
+  stepFontScale,
+  type FontScale,
+} from '@/lib/font-scale'
 import { applyTheme, readTheme, type Theme } from '@/lib/theme'
 
 export function SettingsPage() {
   const { user, signOut, mode } = useAuth()
   const { household, loading, reload } = useHousehold()
+  const { alert, alertError } = useDialog()
   const needsFamily = Boolean(household && household.families.length === 0)
   const canManage = household ? canManageMembers(household) : false
   const [confirm, setConfirm] = useState('')
   const [clearing, setClearing] = useState(false)
-  const [cleared, setCleared] = useState(false)
-  const [clearError, setClearError] = useState<string | null>(null)
   const [theme, setTheme] = useState<Theme>(() => readTheme())
+  const [fontScale, setFontScale] = useState<FontScale>(() => readFontScale())
   const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState<string | null>(null)
   const canClear = household ? canResetTestData(household) : false
 
   if (loading) return <ShimmerSettingsPage />
@@ -33,6 +40,12 @@ export function SettingsPage() {
   function onTheme(next: Theme) {
     setTheme(next)
     applyTheme(next)
+  }
+
+  function onFontScale(delta: -1 | 1) {
+    const next = stepFontScale(fontScale, delta)
+    setFontScale(next)
+    applyFontScale(next)
   }
 
   return (
@@ -50,6 +63,34 @@ export function SettingsPage() {
             </Chip>
           ))}
         </ChipGroup>
+        <p className="mt-5 mb-3 text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
+          Text size
+        </p>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-label="Decrease text size"
+            disabled={fontScale === 0.9}
+            onClick={() => onFontScale(-1)}
+          >
+            A−
+          </Button>
+          <p className="min-w-24 text-center text-[13.5px] text-ink" aria-live="polite">
+            {fontScaleLabel(fontScale)}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-label="Increase text size"
+            disabled={fontScale === 1.3}
+            onClick={() => onFontScale(1)}
+          >
+            A+
+          </Button>
+        </div>
       </section>
 
       <dl className="surface-card mt-6 space-y-4 p-4 text-[13.5px]">
@@ -111,27 +152,11 @@ export function SettingsPage() {
           <p className="text-[10.5px] font-semibold tracking-[0.08em] text-muted uppercase">
             Family
           </p>
-          {household.families.length === 0 ? (
-            <p className="text-[13px] text-muted">
-              No family yet. Add one to start adding people and FDs.
-            </p>
-          ) : (
-            <ul className="divide-y divide-line">
-              {household.families.map((family) => (
-                <li key={family.id} className="py-3 first:pt-0 last:pb-0">
-                  <p className="text-[13px] text-ink">{family.name}</p>
-                  <Link
-                    to={`/families/${family.id}`}
-                    className="mt-2 inline-block text-[13px] text-accent"
-                  >
-                    Edit family
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+          <p className="text-[13px] text-muted">
+            Add or edit a family so people and FDs have a home.
+          </p>
           <Button asChild variant="outline" size="lg">
-            <Link to="/families/new">Add family</Link>
+            <Link to="/settings/families">Manage family</Link>
           </Button>
         </section>
       ) : null}
@@ -145,24 +170,16 @@ export function SettingsPage() {
             Download every person and deposit you can see, plus closures, renewals, and
             receipt file names.
           </p>
-          {exportError ? (
-            <p className="text-[13px] text-danger" role="alert">
-              {exportError}
-            </p>
-          ) : null}
           <Button
             variant="outline"
             size="lg"
             disabled={exporting}
             onClick={() => {
-              setExportError(null)
               setExporting(true)
               try {
                 exportHouseholdExcel(household)
               } catch (cause) {
-                setExportError(
-                  cause instanceof Error ? cause.message : 'Could not export that file.',
-                )
+                void alertError(cause, 'Could not export that file.')
               } finally {
                 setExporting(false)
               }
@@ -189,22 +206,11 @@ export function SettingsPage() {
               value={confirm}
               onChange={(event) => {
                 setConfirm(event.target.value)
-                setCleared(false)
               }}
               placeholder="DELETE"
               autoComplete="off"
             />
           </div>
-          {cleared ? (
-            <p className="text-[13px] text-muted" role="status">
-              Deposits and receipt files are gone.
-            </p>
-          ) : null}
-          {clearError ? (
-            <p className="text-[13px] text-danger" role="alert">
-              {clearError}
-            </p>
-          ) : null}
           <Button
             variant="outline"
             size="lg"
@@ -212,15 +218,14 @@ export function SettingsPage() {
             onClick={() => {
               void (async () => {
                 if (!household) return
-                setClearError(null)
                 setClearing(true)
                 try {
                   await resetTestData(household)
                   setConfirm('')
-                  setCleared(true)
                   await reload()
+                  await alert('Test data cleared', 'Deposits and receipt files are gone.')
                 } catch (cause) {
-                  setClearError(cause instanceof Error ? cause.message : 'Could not clear data.')
+                  await alertError(cause, 'Could not clear data.')
                 } finally {
                   setClearing(false)
                 }

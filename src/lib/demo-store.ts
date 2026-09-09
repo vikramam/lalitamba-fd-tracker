@@ -12,8 +12,11 @@ import type {
 } from '@/lib/types'
 
 const FAMILY_KEY = 'lalitamba.demo.families'
+const DELETED_FAMILY_KEY = 'lalitamba.demo.deletedFamilies'
 const MEMBER_KEY = 'lalitamba.demo.members'
+const DELETED_MEMBER_KEY = 'lalitamba.demo.deletedMembers'
 const FD_KEY = 'lalitamba.demo.fds'
+const DELETED_FD_KEY = 'lalitamba.demo.deletedFds'
 const RECEIPT_KEY = 'lalitamba.demo.receipts'
 const REVIEW_KEY = 'lalitamba.demo.ocrReviews'
 const RENEWAL_KEY = 'lalitamba.demo.renewals'
@@ -54,6 +57,20 @@ export function addDemoFamily(name: string, userId: string): DemoFamilyExtra {
   return family
 }
 
+export function readDeletedDemoFamilyIds(): string[] {
+  return readJson<string>(DELETED_FAMILY_KEY)
+}
+
+export function deleteDemoFamily(id: string) {
+  writeJson(
+    FAMILY_KEY,
+    readDemoFamilies().filter((family) => family.id !== id),
+  )
+  const deleted = new Set(readDeletedDemoFamilyIds())
+  deleted.add(id)
+  writeJson(DELETED_FAMILY_KEY, [...deleted])
+}
+
 export function updateDemoFamily(id: string, name: string): Family | null {
   const extras = readDemoFamilies()
   const extraIndex = extras.findIndex((family) => family.id === id)
@@ -90,6 +107,20 @@ export function addDemoMember(
   return member
 }
 
+export function readDeletedDemoMemberIds(): string[] {
+  return readJson<string>(DELETED_MEMBER_KEY)
+}
+
+export function deleteDemoMember(id: string) {
+  writeJson(
+    MEMBER_KEY,
+    readDemoMembers().filter((member) => member.id !== id),
+  )
+  const deleted = new Set(readDeletedDemoMemberIds())
+  deleted.add(id)
+  writeJson(DELETED_MEMBER_KEY, [...deleted])
+}
+
 export function updateDemoMember(
   id: string,
   input: Pick<FamilyMember, 'full_name' | 'display_name' | 'bank_customer_id' | 'notes'>,
@@ -123,6 +154,36 @@ export function addDemoFd(input: Omit<FixedDeposit, 'id'>): FixedDeposit {
   const row: FixedDeposit = { ...input, id: crypto.randomUUID() }
   writeJson(FD_KEY, [...readDemoDeposits(), row])
   return row
+}
+
+export function readDeletedDemoFdIds(): string[] {
+  return readJson<string>(DELETED_FD_KEY)
+}
+
+export function deleteDemoFd(id: string) {
+  writeJson(
+    FD_KEY,
+    readDemoDeposits().filter((row) => row.id !== id),
+  )
+  writeJson(
+    RECEIPT_KEY,
+    readDemoReceipts().filter((row) => row.fd_id !== id),
+  )
+  writeJson(
+    CLOSURE_KEY,
+    readDemoClosures().filter((row) => row.fd_id !== id),
+  )
+  writeJson(
+    RENEWAL_KEY,
+    readDemoRenewals().filter((row) => row.previous_fd_id !== id && row.new_fd_id !== id),
+  )
+  writeJson(
+    REVIEW_KEY,
+    readDemoReviews().filter((row) => row.fd_id !== id),
+  )
+  const deleted = new Set(readDeletedDemoFdIds())
+  deleted.add(id)
+  writeJson(DELETED_FD_KEY, [...deleted])
 }
 
 export function updateDemoFd(id: string, input: Omit<FixedDeposit, 'id'>): FixedDeposit | null {
@@ -214,8 +275,11 @@ export function addDemoClosure(input: Omit<FdClosure, 'id'>): FdClosure {
 
 export function resetDemoStore() {
   localStorage.removeItem(FAMILY_KEY)
+  localStorage.removeItem(DELETED_FAMILY_KEY)
   localStorage.removeItem(MEMBER_KEY)
+  localStorage.removeItem(DELETED_MEMBER_KEY)
   localStorage.removeItem(FD_KEY)
+  localStorage.removeItem(DELETED_FD_KEY)
   localStorage.removeItem(RECEIPT_KEY)
   localStorage.removeItem(REVIEW_KEY)
   localStorage.removeItem(RENEWAL_KEY)
