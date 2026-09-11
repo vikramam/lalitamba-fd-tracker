@@ -340,22 +340,22 @@ function StatValue({ value }: { value: string }) {
   const ref = useRef<HTMLParagraphElement>(null)
 
   useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const node = ref.current
+    if (!node) return
 
-    function fit() {
-      if (el.clientWidth === 0) return
-      el.style.fontSize = '18px'
+    function fit(target: HTMLParagraphElement) {
+      if (target.clientWidth === 0) return
+      target.style.fontSize = '18px'
       let size = 18
-      while (size > 11 && el.scrollWidth > el.clientWidth + 0.5) {
+      while (size > 11 && target.scrollWidth > target.clientWidth + 0.5) {
         size -= 0.5
-        el.style.fontSize = `${size}px`
+        target.style.fontSize = `${size}px`
       }
     }
 
-    fit()
-    const observer = new ResizeObserver(fit)
-    observer.observe(el)
+    fit(node)
+    const observer = new ResizeObserver(() => fit(node))
+    observer.observe(node)
     return () => observer.disconnect()
   }, [value])
 
