@@ -57,11 +57,11 @@ export function FamilySwitcher({
           aria-expanded={open}
           onClick={() => setOpen(true)}
           className={cn(
-            'type-micro relative flex flex-col items-center gap-1 py-2.5 font-medium',
+            'relative flex flex-col items-center gap-1 py-2.5 text-[12px] font-medium leading-tight',
             open ? 'text-accent' : 'text-muted',
           )}
         >
-          <FamilyIcon className="size-[18px]" />
+          <FamilyIcon className="size-[22px]" />
           Family
           {open ? (
             <span className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-accent" />

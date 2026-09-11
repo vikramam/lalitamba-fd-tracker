@@ -104,14 +104,23 @@ html.light {
   }
 
   input[type='date'] {
+    width: 100%;
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
   }
 
-  input[type='date']::-webkit-datetime-edit {
+  input[type='date']::-webkit-datetime-edit,
+  input[type='date']::-webkit-datetime-edit-fields-wrapper {
     min-width: 0;
+    max-width: 100%;
     overflow: hidden;
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator {
+    margin-inline-start: 0;
+    flex-shrink: 0;
   }
 
   h1,

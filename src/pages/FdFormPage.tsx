@@ -37,6 +37,26 @@ function toDateInput(value: string | null | undefined) {
   return value.slice(0, 10)
 }
 
+function FieldLabel({ id, label }: { id: string; label: string }) {
+  return (
+    <Label htmlFor={id} className="min-w-0 leading-snug">
+      {label}
+    </Label>
+  )
+}
+
+function FieldBadge({ badge }: { badge?: ReturnType<typeof ocrFieldBadge> }) {
+  return (
+    <div className="flex h-5 min-w-0 items-center">
+      <OcrFieldBadge kind={badge} />
+    </div>
+  )
+}
+
+function FieldControl({ children }: { children: ReactNode }) {
+  return <div className="min-w-0 overflow-hidden">{children}</div>
+}
+
 function Field({
   id,
   label,
@@ -49,14 +69,29 @@ function Field({
   children: ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-3">
-        <Label htmlFor={id} className="leading-snug">
-          {label}
-        </Label>
-        <OcrFieldBadge kind={badge} />
-      </div>
-      <div>{children}</div>
+    <div className="flex min-w-0 flex-col gap-1">
+      <FieldLabel id={id} label={label} />
+      <FieldBadge badge={badge} />
+      <FieldControl>{children}</FieldControl>
+    </div>
+  )
+}
+
+function FieldPair({
+  left,
+  right,
+}: {
+  left: { id: string; label: string; badge?: ReturnType<typeof ocrFieldBadge>; children: ReactNode }
+  right: { id: string; label: string; badge?: ReturnType<typeof ocrFieldBadge>; children: ReactNode }
+}) {
+  return (
+    <div className="grid grid-cols-2 items-end gap-x-3 gap-y-1">
+      <FieldLabel id={left.id} label={left.label} />
+      <FieldLabel id={right.id} label={right.label} />
+      <FieldBadge badge={left.badge} />
+      <FieldBadge badge={right.badge} />
+      <FieldControl>{left.children}</FieldControl>
+      <FieldControl>{right.children}</FieldControl>
     </div>
   )
 }
@@ -510,7 +545,7 @@ function FdForm({
       )}
       {carryNote ? <p className="mt-2 type-body text-muted">{carryNote}</p> : null}
 
-      <form className="mt-8 space-y-5 pb-8" onSubmit={(event) => void onSubmit(event)}>
+      <form className="mt-8 min-w-0 space-y-5 overflow-x-hidden pb-8" onSubmit={(event) => void onSubmit(event)}>
         <Field id="member" label="Member">
           <SheetPicker
             id="member"
@@ -570,49 +605,69 @@ function FdForm({
             onChange={(event) => setHolderName(event.target.value)}
           />
         </Field>
-        <div className="grid grid-cols-2 items-stretch gap-3">
-          <Field id="cid" label="CID" badge={badge('bank_customer_id', cid)}>
-            <Input
-              id="cid"
-              className="font-mono"
-              inputMode="numeric"
-              value={cid}
-              onChange={(event) => setCid(event.target.value)}
-            />
-          </Field>
-          <Field id="accountNo" label="FD-A/c No" badge={badge('fd_account_no', accountNo)}>
-            <Input
-              id="accountNo"
-              className="font-mono"
-              value={accountNo}
-              onChange={(event) => setAccountNo(event.target.value)}
-              placeholder="01FD40599"
-            />
-          </Field>
-        </div>
-        <div className="grid grid-cols-2 items-stretch gap-3">
-          <Field id="principal" label="Principal" badge={badge('principal_amount', principal)}>
-            <Input
-              id="principal"
-              className="font-mono"
-              inputMode="decimal"
-              value={principal}
-              onChange={(event) => setPrincipal(event.target.value)}
-              placeholder="150000"
-              required
-            />
-          </Field>
-          <Field id="rate" label="Interest rate %" badge={badge('interest_rate_pct', rate)}>
-            <Input
-              id="rate"
-              className="font-mono"
-              inputMode="decimal"
-              value={rate}
-              onChange={(event) => setRate(event.target.value)}
-              placeholder="11"
-            />
-          </Field>
-        </div>
+        <FieldPair
+          left={{
+            id: 'cid',
+            label: 'CID',
+            badge: badge('bank_customer_id', cid),
+            children: (
+              <Input
+                id="cid"
+                className="font-mono"
+                inputMode="numeric"
+                value={cid}
+                onChange={(event) => setCid(event.target.value)}
+              />
+            ),
+          }}
+          right={{
+            id: 'accountNo',
+            label: 'FD-A/c No',
+            badge: badge('fd_account_no', accountNo),
+            children: (
+              <Input
+                id="accountNo"
+                className="font-mono"
+                value={accountNo}
+                onChange={(event) => setAccountNo(event.target.value)}
+                placeholder="01FD40599"
+              />
+            ),
+          }}
+        />
+        <FieldPair
+          left={{
+            id: 'principal',
+            label: 'Principal',
+            badge: badge('principal_amount', principal),
+            children: (
+              <Input
+                id="principal"
+                className="font-mono"
+                inputMode="decimal"
+                value={principal}
+                onChange={(event) => setPrincipal(event.target.value)}
+                placeholder="150000"
+                required
+              />
+            ),
+          }}
+          right={{
+            id: 'rate',
+            label: 'Interest rate %',
+            badge: badge('interest_rate_pct', rate),
+            children: (
+              <Input
+                id="rate"
+                className="font-mono"
+                inputMode="decimal"
+                value={rate}
+                onChange={(event) => setRate(event.target.value)}
+                placeholder="11"
+              />
+            ),
+          }}
+        />
         <Field id="words" label="Amount in words" badge={badge('principal_amount_words', words)}>
           <Input
             id="words"
@@ -620,24 +675,34 @@ function FdForm({
             onChange={(event) => setWords(event.target.value)}
           />
         </Field>
-        <div className="grid grid-cols-2 items-stretch gap-3">
-          <Field id="years" label="Period (years)" badge={badge('tenure_years', years)}>
-            <Input
-              id="years"
-              inputMode="numeric"
-              value={years}
-              onChange={(event) => setYears(event.target.value)}
-            />
-          </Field>
-          <Field id="label" label="Period label" badge={badge('tenure_label', label)}>
-            <Input
-              id="label"
-              value={label}
-              onChange={(event) => setLabel(event.target.value)}
-              placeholder="3 Years"
-            />
-          </Field>
-        </div>
+        <FieldPair
+          left={{
+            id: 'years',
+            label: 'Period (years)',
+            badge: badge('tenure_years', years),
+            children: (
+              <Input
+                id="years"
+                inputMode="numeric"
+                value={years}
+                onChange={(event) => setYears(event.target.value)}
+              />
+            ),
+          }}
+          right={{
+            id: 'label',
+            label: 'Period label',
+            badge: badge('tenure_label', label),
+            children: (
+              <Input
+                id="label"
+                value={label}
+                onChange={(event) => setLabel(event.target.value)}
+                placeholder="3 Years"
+              />
+            ),
+          }}
+        />
         <Field id="maturity" label="Maturity value" badge={badge('maturity_value', maturity)}>
           <Input
             id="maturity"
@@ -662,56 +727,54 @@ function FdForm({
         </Field>
 
         {paysOutInterest(mode) ? (
-          <div className="grid grid-cols-2 items-stretch gap-3">
-            <Field
-              id="monthly"
-              label={mode === 'quarterly' ? 'Quarterly interest' : 'Monthly interest'}
-              badge={badge('monthly_interest_amount', monthly)}
-            >
-              <Input
-                id="monthly"
-                className="font-mono"
-                inputMode="decimal"
-                value={monthly}
-                onChange={(event) => setMonthly(event.target.value)}
-                placeholder="1375"
-              />
-            </Field>
-            <Field
-              id="msAccount"
-              label="MS A/c"
-              badge={badge('interest_credit_account', msAccount)}
-            >
-              <Input
-                id="msAccount"
-                value={msAccount}
-                onChange={(event) => setMsAccount(event.target.value)}
-                placeholder="01003MS001396"
-              />
-            </Field>
-          </div>
+          <FieldPair
+            left={{
+              id: 'monthly',
+              label: mode === 'quarterly' ? 'Quarterly interest' : 'Monthly interest',
+              badge: badge('monthly_interest_amount', monthly),
+              children: (
+                <Input
+                  id="monthly"
+                  className="font-mono"
+                  inputMode="decimal"
+                  value={monthly}
+                  onChange={(event) => setMonthly(event.target.value)}
+                  placeholder="1375"
+                />
+              ),
+            }}
+            right={{
+              id: 'msAccount',
+              label: 'MS A/c',
+              badge: badge('interest_credit_account', msAccount),
+              children: (
+                <Input
+                  id="msAccount"
+                  value={msAccount}
+                  onChange={(event) => setMsAccount(event.target.value)}
+                  placeholder="01003MS001396"
+                />
+              ),
+            }}
+          />
         ) : null}
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:items-start sm:gap-3">
-          <Field id="fdDate" label="FD date" badge={badge('fd_date', fdDate)}>
-            <Input
-              id="fdDate"
-              type="date"
-              className="min-w-0"
-              value={fdDate}
-              onChange={(event) => setFdDate(event.target.value)}
-            />
-          </Field>
-          <Field id="maturityDate" label="Date of maturity" badge={badge('maturity_date', maturityDate)}>
-            <Input
-              id="maturityDate"
-              type="date"
-              className="min-w-0"
-              value={maturityDate}
-              onChange={(event) => setMaturityDate(event.target.value)}
-            />
-          </Field>
-        </div>
+        <Field id="fdDate" label="FD date" badge={badge('fd_date', fdDate)}>
+          <Input
+            id="fdDate"
+            type="date"
+            value={fdDate}
+            onChange={(event) => setFdDate(event.target.value)}
+          />
+        </Field>
+        <Field id="maturityDate" label="Date of maturity" badge={badge('maturity_date', maturityDate)}>
+          <Input
+            id="maturityDate"
+            type="date"
+            value={maturityDate}
+            onChange={(event) => setMaturityDate(event.target.value)}
+          />
+        </Field>
         <Field id="holderAddress" label="Address" badge={badge('holder_address', holderAddress)}>
           <Input
             id="holderAddress"
@@ -719,25 +782,36 @@ function FdForm({
             onChange={(event) => setHolderAddress(event.target.value)}
           />
         </Field>
-        <Field id="nominee" label="Nominee" badge={badge('nominee_name', nominee)}>
-          <Input
-            id="nominee"
-            value={nominee}
-            onChange={(event) => setNominee(event.target.value)}
-          />
-        </Field>
-        <Field id="relationship" label="Relationship" badge={badge('nominee_relationship', relationship)}>
-          <Input
-            id="relationship"
-            value={relationship}
-            onChange={(event) => setRelationship(event.target.value)}
-          />
-        </Field>
+        <FieldPair
+          left={{
+            id: 'nominee',
+            label: 'Nominee',
+            badge: badge('nominee_name', nominee),
+            children: (
+              <Input
+                id="nominee"
+                value={nominee}
+                onChange={(event) => setNominee(event.target.value)}
+              />
+            ),
+          }}
+          right={{
+            id: 'relationship',
+            label: 'Relationship',
+            badge: badge('nominee_relationship', relationship),
+            children: (
+              <Input
+                id="relationship"
+                value={relationship}
+                onChange={(event) => setRelationship(event.target.value)}
+              />
+            ),
+          }}
+        />
         <Field id="txnDate" label="Transaction date" badge={badge('transaction_date', txnDate)}>
           <Input
             id="txnDate"
             type="date"
-            className="min-w-0 max-w-full sm:max-w-xs"
             value={txnDate}
             onChange={(event) => setTxnDate(event.target.value)}
           />

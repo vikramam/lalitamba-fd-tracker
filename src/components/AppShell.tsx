@@ -89,14 +89,14 @@ function MobileTab({
       end={tab.end}
       className={({ isActive }) =>
         cn(
-          'type-micro relative flex flex-col items-center gap-1 py-2.5 font-medium',
+          'relative flex flex-col items-center gap-1 py-2.5 text-[12px] font-medium leading-tight',
           isActive ? 'text-accent' : 'text-muted',
         )
       }
     >
       {({ isActive }) => (
         <>
-          <tab.icon className="size-[18px]" />
+          <tab.icon className="size-[22px]" />
           {tab.label}
           {isActive ? (
             <span className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-accent" />
