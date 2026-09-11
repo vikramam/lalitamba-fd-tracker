@@ -347,9 +347,11 @@ function FdForm({
           )
         }
       } else {
+        setReading(false)
         await alert('Read receipt', result.message ?? 'Could not read the receipt.')
       }
     } catch (cause) {
+      setReading(false)
       await alertError(cause, 'Could not read the receipt.', 'Read receipt')
     } finally {
       setReading(false)

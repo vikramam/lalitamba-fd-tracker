@@ -88,8 +88,7 @@ export async function extractFdReceipt(input: {
       warnings: [],
       ocrRunId: null,
       status: 'skipped',
-      message:
-        'Could not read the receipt. Type the fields. Deploy extract-fd-receipt and set the Gemini secret on the function.',
+      message: ocrInvokeMessage(error),
     }
   }
 
@@ -136,7 +135,36 @@ export async function extractFdReceipt(input: {
   }
 }
 
-async function invokeExtract(body: { storage_path: string; family_id: string }) {
+function errorMessage(error: unknown) {
+  if (error instanceof Error && error.message.trim()) return error.message.trim()
+  if (typeof error === 'object' && error && 'message' in error) {
+    const text = String((error as { message?: unknown }).message ?? '').trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function isTransientOcrFailure(error: unknown) {
+  return /timed? ?out|abort|network|failed to fetch|502|503|504|500/i.test(errorMessage(error))
+}
+
+function ocrInvokeMessage(error: unknown) {
+  const text = errorMessage(error)
+  if (/limit reached/i.test(text)) return text
+  if (/not authenticated/i.test(text)) return 'Sign in again, then retry the receipt.'
+  if (/don't have access/i.test(text)) return "You don't have access to that family's receipts."
+  if (isTransientOcrFailure(error)) {
+    return 'Reading the receipt timed out or the reader was busy. Try the same photo again, or type the fields.'
+  }
+  if (/GEMINI|quota|rate.?limit|not configured/i.test(text)) {
+    return `Could not read the receipt. ${text}`
+  }
+  return text
+    ? `Could not read the receipt. ${text}`
+    : 'Could not read the receipt. Try again, or type the fields.'
+}
+
+async function invokeExtractOnce(body: { storage_path: string; family_id: string }) {
   if (import.meta.env.PROD && supabase) {
     const { data: sessionData } = await supabase.auth.getSession()
     const token = sessionData.session?.access_token
@@ -161,6 +189,12 @@ async function invokeExtract(body: { storage_path: string; family_id: string }) 
   }
 
   return supabase!.functions.invoke('extract-fd-receipt', { body })
+}
+
+async function invokeExtract(body: { storage_path: string; family_id: string }) {
+  const first = await invokeExtractOnce(body)
+  if (!first.error || !isTransientOcrFailure(first.error)) return first
+  return invokeExtractOnce(body)
 }
 
 export async function linkOcrRun(input: {

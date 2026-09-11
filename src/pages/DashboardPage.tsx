@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ChevronIcon } from '@/components/icons'
@@ -336,6 +336,39 @@ function MemberSlide({ member }: { member: MemberTotal }) {
   )
 }
 
+function StatValue({ value }: { value: string }) {
+  const ref = useRef<HTMLParagraphElement>(null)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    function fit() {
+      if (el.clientWidth === 0) return
+      el.style.fontSize = '18px'
+      let size = 18
+      while (size > 11 && el.scrollWidth > el.clientWidth + 0.5) {
+        size -= 0.5
+        el.style.fontSize = `${size}px`
+      }
+    }
+
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [value])
+
+  return (
+    <p
+      ref={ref}
+      className="type-stat-secondary w-full min-w-0 whitespace-nowrap text-ink [overflow-wrap:normal]"
+    >
+      {value}
+    </p>
+  )
+}
+
 function Stat({
   label,
   value,
@@ -358,20 +391,12 @@ function Stat({
           </span>
         ) : null}
       </div>
-      <p
-        className={cn(
-          'type-stat-secondary w-full whitespace-nowrap text-ink [overflow-wrap:normal]',
-          value.length >= 10 && 'text-[14px]',
-          value.length >= 12 && 'text-[12.5px]',
-        )}
-      >
-        {value}
-      </p>
+      <StatValue value={value} />
       <p className="type-label mt-0.5">{label}</p>
     </>
   )
   const className = cn(
-    'surface-card relative flex flex-col items-center px-2 py-2 text-center',
+    'surface-card relative flex min-w-0 flex-col items-center px-2 py-2 text-center',
     wash && 'hero-stat',
     to && 'hover:bg-inner',
   )
