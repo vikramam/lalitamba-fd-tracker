@@ -150,6 +150,14 @@ export function readDemoDeposits(): FixedDeposit[] {
   return readJson<FixedDeposit>(FD_KEY)
 }
 
+export function allDemoDeposits(): FixedDeposit[] {
+  const extras = readDemoDeposits()
+  const deleted = new Set(readDeletedDemoFdIds())
+  const rows = new Map(demoDeposits.map((row) => [row.id, row]))
+  for (const row of extras) rows.set(row.id, row)
+  return [...rows.values()].filter((fd) => !deleted.has(fd.id))
+}
+
 export function addDemoFd(input: Omit<FixedDeposit, 'id'>): FixedDeposit {
   const row: FixedDeposit = { ...input, id: crypto.randomUUID() }
   writeJson(FD_KEY, [...readDemoDeposits(), row])
@@ -197,6 +205,30 @@ export function updateDemoFd(id: string, input: Omit<FixedDeposit, 'id'>): Fixed
   else extras[extraIndex] = next
   writeJson(FD_KEY, extras)
   return next
+}
+
+export function moveDemoFdRelated(fdIds: string[], familyId: string) {
+  const idSet = new Set(fdIds)
+  writeJson(
+    RECEIPT_KEY,
+    readDemoReceipts().map((row) =>
+      idSet.has(row.fd_id) ? { ...row, family_id: familyId } : row,
+    ),
+  )
+  writeJson(
+    CLOSURE_KEY,
+    readDemoClosures().map((row) =>
+      idSet.has(row.fd_id) ? { ...row, family_id: familyId } : row,
+    ),
+  )
+  writeJson(
+    RENEWAL_KEY,
+    readDemoRenewals().map((row) =>
+      idSet.has(row.previous_fd_id) && idSet.has(row.new_fd_id)
+        ? { ...row, family_id: familyId }
+        : row,
+    ),
+  )
 }
 
 export function readDemoReceipts(): FdReceipt[] {

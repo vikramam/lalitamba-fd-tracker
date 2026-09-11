@@ -159,6 +159,9 @@ export function FdDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const fd = household?.deposits.find((row) => row.id === fdId)
   const member = household?.members.find((row) => row.id === fd?.family_member_id)
+  const familyName = household?.families.find(
+    (family) => family.id === (member?.family_id ?? fd?.family_id),
+  )?.name
   const receipt = household && fd ? currentReceipt(household.receipts, fd.id) : null
   const canWrite = household ? canWriteFds(household) : false
   const checks = fd ? fdCheckMessages(fd) : []
@@ -226,7 +229,10 @@ export function FdDetailPage() {
         <h1 className="type-section mt-1">
           {fd.fd_account_no ?? 'Fixed deposit'}
         </h1>
-        <p className="mt-1 type-body text-muted">{member?.full_name ?? fd.holder_name}</p>
+        <p className="mt-1 type-body text-muted">
+          {member?.full_name ?? fd.holder_name}
+          {familyName ? ` (${familyName})` : ''}
+        </p>
       </div>
 
       <section className="hero-card mt-6 p-5">

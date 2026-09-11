@@ -1,8 +1,75 @@
-import { addDemoFd, deleteDemoFd, updateDemoFd } from '@/lib/demo-store'
+import {
+  addDemoFd,
+  allDemoDeposits,
+  deleteDemoFd,
+  moveDemoFdRelated,
+  updateDemoFd,
+} from '@/lib/demo-store'
 import { FD_SELECT, mapFixedDeposit } from '@/lib/fd-map'
 import { normalizeFdInput, type FdDraft } from '@/lib/fd-input'
 import { supabase } from '@/lib/supabase'
 import type { FamilyMember, FixedDeposit, Household } from '@/lib/types'
+
+export const DUPLICATE_FD_ACCOUNT_MESSAGE =
+  'This FD-A/c No already exists. Each deposit must have a unique account number.'
+
+export function fdAccountKey(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? ''
+}
+
+export function isDuplicateFdAccountError(cause: unknown) {
+  if (!cause || typeof cause !== 'object') return false
+  const error = cause as { code?: string; message?: string }
+  const message = error.message ?? ''
+  return (
+    error.code === '23505' ||
+    /duplicate key value/i.test(message) ||
+    /idx_fds_account/i.test(message)
+  )
+}
+
+function mapFdWriteError(error: { code?: string; message: string }) {
+  if (isDuplicateFdAccountError(error)) {
+    return new Error(DUPLICATE_FD_ACCOUNT_MESSAGE)
+  }
+  return new Error(error.message)
+}
+
+export function duplicateFdAccountError(
+  accountNo: string | null | undefined,
+  deposits: Array<Pick<FixedDeposit, 'id' | 'fd_account_no'>>,
+  excludeId?: string,
+) {
+  const key = fdAccountKey(accountNo)
+  if (!key) return null
+  const found = deposits.some(
+    (fd) => fd.id !== excludeId && fdAccountKey(fd.fd_account_no) === key,
+  )
+  return found ? DUPLICATE_FD_ACCOUNT_MESSAGE : null
+}
+
+export function depositsForAccountCheck(household: Household) {
+  if (!supabase) return allDemoDeposits()
+  return household.deposits
+}
+
+async function assertUniqueFdAccount(accountNo: string | null, excludeId?: string) {
+  const key = fdAccountKey(accountNo)
+  if (!key) return
+
+  if (!supabase) {
+    const existing = duplicateFdAccountError(accountNo, allDemoDeposits(), excludeId)
+    if (existing) throw new Error(existing)
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('fixed_deposits')
+    .select('id, fd_account_no')
+  if (error) throw new Error(error.message)
+  const existing = duplicateFdAccountError(accountNo, data ?? [], excludeId)
+  if (existing) throw new Error(existing)
+}
 
 function writePayload(row: ReturnType<typeof normalizeFdInput>) {
   return {
@@ -38,6 +105,7 @@ export async function createFd(
   members: FamilyMember[],
 ): Promise<FixedDeposit> {
   const row = normalizeFdInput(draft, members)
+  await assertUniqueFdAccount(row.fd_account_no)
   if (!supabase) {
     return addDemoFd(row)
   }
@@ -47,7 +115,7 @@ export async function createFd(
     .insert(writePayload(row))
     .select(FD_SELECT)
     .single()
-  if (error) throw new Error(error.message)
+  if (error) throw mapFdWriteError(error)
   return mapFixedDeposit(data as Record<string, unknown>)
 }
 
@@ -58,6 +126,7 @@ export async function updateFd(
   current: FixedDeposit,
 ): Promise<FixedDeposit> {
   const row = normalizeFdInput(draft, members, current)
+  await assertUniqueFdAccount(row.fd_account_no, id)
   if (!supabase) {
     const updated = updateDemoFd(id, row)
     if (!updated) throw new Error('Deposit not found.')
@@ -70,7 +139,7 @@ export async function updateFd(
     .eq('id', id)
     .select(FD_SELECT)
     .single()
-  if (error) throw new Error(error.message)
+  if (error) throw mapFdWriteError(error)
   return mapFixedDeposit(data as Record<string, unknown>)
 }
 
@@ -135,4 +204,95 @@ export async function deleteFd(fd: FixedDeposit) {
 
   const { error } = await supabase.from('fixed_deposits').delete().eq('id', fd.id)
   if (error) throw new Error(error.message)
+}
+
+function expandWithRenewals(fdIds: string[], household: Household) {
+  const nextOf = new Map(household.renewals.map((row) => [row.previous_fd_id, row.new_fd_id]))
+  const prevOf = new Map(household.renewals.map((row) => [row.new_fd_id, row.previous_fd_id]))
+  const all = new Set(fdIds)
+  let grew = true
+  while (grew) {
+    grew = false
+    for (const id of [...all]) {
+      const next = nextOf.get(id)
+      const prev = prevOf.get(id)
+      if (next && !all.has(next)) {
+        all.add(next)
+        grew = true
+      }
+      if (prev && !all.has(prev)) {
+        all.add(prev)
+        grew = true
+      }
+    }
+  }
+  return [...all]
+}
+
+export function canMoveFds(household: Pick<Household, 'isAppAdmin' | 'families'>) {
+  return household.isAppAdmin || household.families.length > 0
+}
+
+export async function moveFds(input: {
+  household: Household
+  fdIds: string[]
+  targetMemberId: string
+}) {
+  const member = input.household.members.find((row) => row.id === input.targetMemberId)
+  if (!member) throw new Error('Choose a person in the destination family.')
+
+  const destFamily = input.household.families.find((family) => family.id === member.family_id)
+  if (!destFamily && !input.household.isAppAdmin) {
+    throw new Error('You cannot move FDs into that family.')
+  }
+
+  const ids = expandWithRenewals(input.fdIds, input.household)
+  if (ids.length === 0) throw new Error('Choose at least one FD to move.')
+
+  const deposits = ids.map((id) => {
+    const fd = input.household.deposits.find((row) => row.id === id)
+    if (!fd) throw new Error('One of those deposits could not be found.')
+    return fd
+  })
+
+  const alreadyThere = deposits.every(
+    (fd) => fd.family_id === member.family_id && fd.family_member_id === member.id,
+  )
+  if (alreadyThere) {
+    throw new Error('Those FDs already belong to that person.')
+  }
+
+  if (!supabase) {
+    for (const fd of deposits) {
+      const updated = updateDemoFd(fd.id, {
+        ...fd,
+        family_id: member.family_id,
+        family_member_id: member.id,
+      })
+      if (!updated) throw new Error('Deposit not found.')
+    }
+    moveDemoFdRelated(ids, member.family_id)
+    return
+  }
+
+  const { error: fdError } = await supabase
+    .from('fixed_deposits')
+    .update({ family_id: member.family_id, family_member_id: member.id })
+    .in('id', ids)
+  if (fdError) throw new Error(fdError.message)
+
+  const related = [
+    supabase.from('fd_receipts').update({ family_id: member.family_id }).in('fd_id', ids),
+    supabase.from('ocr_runs').update({ family_id: member.family_id }).in('fd_id', ids),
+    supabase.from('fd_closures').update({ family_id: member.family_id }).in('fd_id', ids),
+    supabase
+      .from('fd_renewals')
+      .update({ family_id: member.family_id })
+      .in('previous_fd_id', ids)
+      .in('new_fd_id', ids),
+  ]
+  for (const request of related) {
+    const { error } = await request
+    if (error) throw new Error(error.message)
+  }
 }

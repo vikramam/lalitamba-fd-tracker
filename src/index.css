@@ -103,6 +103,17 @@ html.light {
     @apply min-h-svh;
   }
 
+  input[type='date'] {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  input[type='date']::-webkit-datetime-edit {
+    min-width: 0;
+    overflow: hidden;
+  }
+
   h1,
   h2,
   .font-display {
@@ -237,12 +248,101 @@ html.light {
     border-radius: 16px;
   }
 
+  .due-chip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: var(--inner-bg);
+    color: var(--chip-text);
+  }
+
+  .due-chip-warn {
+    color: var(--warning);
+    background: color-mix(in srgb, var(--warning) 16%, transparent);
+  }
+
+  .due-chip-danger {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 16%, transparent);
+  }
+
+  .due-chip-3d {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #1b1710;
+    border: 0;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+      0 2px 0 rgba(0, 0, 0, 0.28),
+      0 5px 10px rgba(0, 0, 0, 0.28);
+  }
+
+  .due-chip-3d:active {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1px 0 rgba(0, 0, 0, 0.18),
+      0 1px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .due-chip-3d-danger {
+    background-image: linear-gradient(180deg, #f28b82 0%, #e5564a 52%, #c43d34 100%);
+  }
+
+  .due-chip-3d-warn {
+    background-image: linear-gradient(180deg, #e8b06a 0%, #d9822b 52%, #b56a1c 100%);
+  }
+
   .hero-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 20px;
     box-shadow: var(--card-shadow);
     background-image: var(--hero-glow);
+  }
+
+  .hero-logo-mark {
+    position: absolute;
+    right: -28px;
+    top: -8px;
+    width: 240px;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 50%;
+    opacity: 0.8;
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+    mask-image: radial-gradient(circle at 50% 45%, #000 28%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 28%, transparent 70%);
+  }
+
+  .hero-stat {
+    background: color-mix(in srgb, var(--card) 58%, transparent);
+    border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  html.light .hero-logo-mark {
+    opacity: 0.22;
+    mix-blend-mode: multiply;
   }
 
   .brand-gradient {

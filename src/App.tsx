@@ -19,6 +19,7 @@ import { MemberFormPage } from '@/pages/MemberFormPage'
 import { MembersPage } from '@/pages/MembersPage'
 import { AdminAccountsPage } from '@/pages/AdminAccountsPage'
 import { ManageFamiliesPage } from '@/pages/ManageFamiliesPage'
+import { MoveFdsPage } from '@/pages/MoveFdsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
 export default function App() {
@@ -53,6 +54,7 @@ export default function App() {
                 <Route path="/fds/:fdId" element={<FdDetailPage />} />
                 <Route path="/settings/accounts" element={<AdminAccountsPage />} />
                 <Route path="/settings/families" element={<ManageFamiliesPage />} />
+                <Route path="/settings/move-fds" element={<MoveFdsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
             </Route>

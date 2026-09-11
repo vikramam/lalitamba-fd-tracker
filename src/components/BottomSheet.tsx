@@ -49,7 +49,7 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
-        className="bottom-sheet-panel relative flex max-h-[88vh] w-full flex-col rounded-t-[24px] border border-line bg-surface"
+        className="bottom-sheet-panel relative z-10 flex max-h-[88vh] w-full flex-col rounded-t-[24px] border border-line bg-surface"
         style={{ maxWidth }}
       >
         <div

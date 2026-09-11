@@ -22,6 +22,12 @@ export function daysUntil(iso: string | null, now = new Date()): number | null {
   return Math.round((target.getTime() - start.getTime()) / 86_400_000)
 }
 
+export function isPastDue(fd: Pick<FixedDeposit, 'status' | 'maturity_date'>, now = new Date()) {
+  if (fd.status !== 'active') return false
+  const days = daysUntil(fd.maturity_date, now)
+  return days !== null && days < 0
+}
+
 export function isDueThisMonth(fd: Pick<FixedDeposit, 'status' | 'maturity_date'>, now = new Date()) {
   if (fd.status !== 'active') return false
   const date = parseLocalDate(fd.maturity_date)
@@ -130,6 +136,15 @@ export type MemberTotal = {
   name: string
   count: number
   principal: number
+  monthlyIncome: number
+  quarterlyIncome: number
+  maturityTotal: number
+  interestCredited: number
+  monthlyFds: number
+  quarterlyFds: number
+  onMaturityFds: number
+  pastDueCount: number
+  dueThisMonthCount: number
 }
 
 export type DashboardSummary = {
@@ -141,6 +156,9 @@ export type DashboardSummary = {
   quarterlyIncome: number
   lockedInterest: number
   interestCredited: number
+  monthlyFdCount: number
+  quarterlyFdCount: number
+  onMaturityFdCount: number
   upcoming: Array<{ fd: FixedDeposit; days: number }>
   dueThisMonth: FixedDeposit[]
   pastDue: FixedDeposit[]
@@ -169,15 +187,7 @@ export function summarizeDashboard(
   pastDue.sort((left, right) => (left.maturity_date ?? '').localeCompare(right.maturity_date ?? ''))
 
   const byMember = members
-    .map((member) => {
-      const rows = active.filter((fd) => fd.family_member_id === member.id)
-      return {
-        memberId: member.id,
-        name: member.display_name || member.full_name,
-        count: rows.length,
-        principal: rows.reduce((sum, fd) => sum + fd.principal_amount, 0),
-      }
-    })
+    .map((member) => summarizeMember(member, active, now))
     .filter((row) => row.count > 0)
     .sort((left, right) => right.principal - left.principal)
 
@@ -189,14 +199,48 @@ export function summarizeDashboard(
     monthlyIncome: active.reduce((sum, fd) => sum + monthlyIncomeOf(fd), 0),
     quarterlyIncome: active.reduce((sum, fd) => sum + quarterlyIncomeOf(fd), 0),
     lockedInterest: active.reduce((sum, fd) => sum + lockedInterestOf(fd), 0),
-    interestCredited: active.reduce((sum, fd) => {
-      const credit = interestCreditedToDate(fd, { now })
-      return sum + (credit?.amount ?? 0)
-    }, 0),
+    interestCredited: creditedTotal(active, now),
+    monthlyFdCount: countMode(active, 'monthly'),
+    quarterlyFdCount: countMode(active, 'quarterly'),
+    onMaturityFdCount: countMode(active, 'on_maturity'),
     upcoming,
     dueThisMonth: active.filter((fd) => isDueThisMonth(fd, now)),
     pastDue,
     matured,
     byMember,
   }
+}
+
+function summarizeMember(
+  member: FamilyMember,
+  active: FixedDeposit[],
+  now: Date,
+): MemberTotal {
+  const rows = active.filter((fd) => fd.family_member_id === member.id)
+  return {
+    memberId: member.id,
+    name: member.display_name || member.full_name,
+    count: rows.length,
+    principal: rows.reduce((sum, fd) => sum + fd.principal_amount, 0),
+    monthlyIncome: rows.reduce((sum, fd) => sum + monthlyIncomeOf(fd), 0),
+    quarterlyIncome: rows.reduce((sum, fd) => sum + quarterlyIncomeOf(fd), 0),
+    maturityTotal: rows.reduce((sum, fd) => sum + maturityValueOf(fd), 0),
+    interestCredited: creditedTotal(rows, now),
+    monthlyFds: countMode(rows, 'monthly'),
+    quarterlyFds: countMode(rows, 'quarterly'),
+    onMaturityFds: countMode(rows, 'on_maturity'),
+    pastDueCount: rows.filter((fd) => isPastDue(fd, now)).length,
+    dueThisMonthCount: rows.filter((fd) => isDueThisMonth(fd, now)).length,
+  }
+}
+
+function creditedTotal(rows: FixedDeposit[], now: Date) {
+  return rows.reduce((sum, fd) => {
+    const credit = interestCreditedToDate(fd, { now })
+    return sum + (credit?.amount ?? 0)
+  }, 0)
+}
+
+function countMode(rows: FixedDeposit[], mode: FixedDeposit['interest_mode']) {
+  return rows.filter((fd) => fd.interest_mode === mode).length
 }

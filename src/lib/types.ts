@@ -129,6 +129,7 @@ export type FdClosure = {
 export type Household = {
   isAppAdmin: boolean
   isSuperAdmin: boolean
+  membershipFamilyIds: string[]
   families: Array<Family & { role: FamilyRole | 'app_admin' }>
   members: FamilyMember[]
   deposits: FixedDeposit[]

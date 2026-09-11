@@ -9,6 +9,7 @@ export function ListRow({
   title,
   subtitle,
   leading,
+  middle,
   trailing,
   muted,
   tone,
@@ -17,17 +18,13 @@ export function ListRow({
   title: ReactNode
   subtitle?: ReactNode
   leading?: ReactNode
+  middle?: ReactNode
   trailing?: ReactNode
   muted?: boolean
   tone?: 'default' | 'warn' | 'danger'
 }) {
-  const body = (
-    <div
-      className={cn(
-        'surface-card flex items-center gap-3 px-3.5 py-3.5',
-        muted && 'opacity-60',
-      )}
-    >
+  const copy = (
+    <>
       {leading}
       <div className="min-w-0 flex-1">
         <p className="type-card-title truncate text-ink">{title}</p>
@@ -46,8 +43,35 @@ export function ListRow({
           </p>
         ) : null}
       </div>
-      {trailing ? <div className="shrink-0 text-right">{trailing}</div> : null}
-      {to ? <ChevronIcon className="shrink-0 text-[color:var(--text-tertiary)]" /> : null}
+    </>
+  )
+  const chevron = to ? (
+    <ChevronIcon className="shrink-0 text-[color:var(--text-tertiary)]" />
+  ) : null
+  const body = (
+    <div
+      className={cn(
+        'surface-card items-center gap-3 px-3.5 py-3.5',
+        muted && 'opacity-60',
+        middle
+          ? 'grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'
+          : 'flex',
+      )}
+    >
+      {middle ? <div className="flex min-w-0 items-center gap-3">{copy}</div> : copy}
+      {middle ? <div className="justify-self-center">{middle}</div> : null}
+      {trailing || (middle && chevron) ? (
+        <div
+          className={cn(
+            'flex shrink-0 items-center justify-end gap-2 text-right',
+            middle && 'justify-self-end',
+          )}
+        >
+          {trailing}
+          {middle ? chevron : null}
+        </div>
+      ) : null}
+      {middle ? null : chevron}
     </div>
   )
 

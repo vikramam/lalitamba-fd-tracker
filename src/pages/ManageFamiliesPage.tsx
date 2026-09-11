@@ -10,7 +10,7 @@ import { useHousehold } from '@/hooks/HouseholdProvider'
 import { canManageMembers, deleteFamily, familyDeleteError } from '@/lib/members'
 
 export function ManageFamiliesPage() {
-  const { household, loading, reload } = useHousehold()
+  const { allHousehold: household, loading, reload } = useHousehold()
   const { alert, confirm, alertError } = useDialog()
   const canManage = household ? canManageMembers(household) : false
   const [busy, setBusy] = useState(false)
@@ -72,13 +72,15 @@ export function ManageFamiliesPage() {
             No family yet. Add one to start adding people and FDs.
           </p>
         ) : (
-          <ul className="mt-3">
-            {families.map((family) => (
+          <ol className="mt-3">
+            {families.map((family, index) => (
               <li
                 key={family.id}
                 className="flex items-center justify-between gap-3 border-t border-line py-3 first:border-t-0 first:pt-0"
               >
-                <p className="type-card-title min-w-0 truncate text-ink">{family.name}</p>
+                <p className="type-card-title min-w-0 truncate text-ink">
+                  {index + 1}. {family.name}
+                </p>
                 <div className="flex shrink-0 items-center">
                   <Link
                     to={`/families/${family.id}`}
@@ -99,7 +101,7 @@ export function ManageFamiliesPage() {
                 </div>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
       </section>
 

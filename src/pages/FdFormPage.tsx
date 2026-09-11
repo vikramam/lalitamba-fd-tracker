@@ -16,7 +16,13 @@ import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import { fdCheckMessages } from '@/lib/fd-checks'
 import { normalizeFdInput, type FdDraft } from '@/lib/fd-input'
-import { canWriteFds, createFd, updateFd } from '@/lib/fds'
+import {
+  canWriteFds,
+  createFd,
+  depositsForAccountCheck,
+  duplicateFdAccountError,
+  updateFd,
+} from '@/lib/fds'
 import { formatInr, paysOutInterest } from '@/lib/format'
 import type { FdExtraction } from '@/lib/lalitamba-map'
 import { carryMessage, canLifecycle, renewFd, suggestedCarry } from '@/lib/lifecycle'
@@ -25,6 +31,11 @@ import { ocrFieldBadge, saveOcrFieldReviews, type ReviewField } from '@/lib/ocr-
 import type { PreparedReceipt } from '@/lib/receipt-file'
 import { currentReceipt, saveFdReceipt } from '@/lib/receipts'
 import type { FamilyMember, FixedDeposit, Household, InterestMode } from '@/lib/types'
+
+function toDateInput(value: string | null | undefined) {
+  if (!value) return ''
+  return value.slice(0, 10)
+}
 
 function Field({
   id,
@@ -38,14 +49,14 @@ function Field({
   children: ReactNode
 }) {
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <div className="flex items-start justify-between gap-3">
         <Label htmlFor={id} className="leading-snug">
           {label}
         </Label>
         <OcrFieldBadge kind={badge} />
       </div>
-      <div className="mt-auto">{children}</div>
+      <div>{children}</div>
     </div>
   )
 }
@@ -204,12 +215,10 @@ function FdForm({
   const members = household.members
   const seed = isRenew ? previous : fd
   const existingReceipt = fd ? currentReceipt(household.receipts, fd.id) : null
-  const [memberId, setMemberId] = useState(seed?.family_member_id ?? members[0]?.id ?? '')
+  const [memberId, setMemberId] = useState(seed?.family_member_id ?? '')
   const [accountNo, setAccountNo] = useState(isRenew ? '' : (fd?.fd_account_no ?? ''))
-  const [cid, setCid] = useState(seed?.bank_customer_id ?? members[0]?.bank_customer_id ?? '')
-  const [holderName, setHolderName] = useState(
-    seed?.holder_name ?? members[0]?.full_name ?? '',
-  )
+  const [cid, setCid] = useState(seed?.bank_customer_id ?? '')
+  const [holderName, setHolderName] = useState(seed?.holder_name ?? '')
   const [holderAddress, setHolderAddress] = useState(seed?.holder_address ?? '')
   const [principal, setPrincipal] = useState(
     fd ? String(fd.principal_amount) : '',
@@ -234,9 +243,9 @@ function FdForm({
       ? ''
       : String(fd.maturity_value),
   )
-  const [fdDate, setFdDate] = useState(fd?.fd_date ?? '')
-  const [txnDate, setTxnDate] = useState(fd?.transaction_date ?? '')
-  const [maturityDate, setMaturityDate] = useState(fd?.maturity_date ?? '')
+  const [fdDate, setFdDate] = useState(toDateInput(fd?.fd_date))
+  const [txnDate, setTxnDate] = useState(toDateInput(fd?.transaction_date))
+  const [maturityDate, setMaturityDate] = useState(toDateInput(fd?.maturity_date))
   const [nominee, setNominee] = useState(seed?.nominee_name ?? '')
   const [relationship, setRelationship] = useState(seed?.nominee_relationship ?? '')
   const [status, setStatus] = useState(fd?.status ?? 'active')
@@ -292,9 +301,9 @@ function FdForm({
       if (fields.interest_credit_account) setMsAccount(fields.interest_credit_account)
     }
     if (fields.maturity_value !== null) setMaturity(String(fields.maturity_value))
-    if (fields.fd_date) setFdDate(fields.fd_date)
-    if (fields.transaction_date) setTxnDate(fields.transaction_date)
-    if (fields.maturity_date) setMaturityDate(fields.maturity_date)
+    if (fields.fd_date) setFdDate(toDateInput(fields.fd_date))
+    if (fields.transaction_date) setTxnDate(toDateInput(fields.transaction_date))
+    if (fields.maturity_date) setMaturityDate(toDateInput(fields.maturity_date))
     if (fields.nominee_name) setNominee(fields.nominee_name)
     if (fields.nominee_relationship) setRelationship(fields.nominee_relationship)
   }
@@ -323,9 +332,20 @@ function FdForm({
         setExtracted(result.fields)
         setConfidence(result.confidence)
         applyExtraction(result.fields)
-        setOcrMessage(
-          result.message ?? 'Check the extracted fields. Nothing is saved until you tap Save.',
+        const duplicate = duplicateFdAccountError(
+          result.fields.fd_account_no,
+          depositsForAccountCheck(household),
+          createdFd?.id ?? fd?.id,
         )
+        setOcrWarnings(duplicate ? [...result.warnings, duplicate] : result.warnings)
+        if (duplicate) {
+          setOcrMessage(duplicate)
+          await alert('FD-A/c No already exists', duplicate)
+        } else {
+          setOcrMessage(
+            result.message ?? 'Check the extracted fields. Nothing is saved until you tap Save.',
+          )
+        }
       } else {
         await alert('Read receipt', result.message ?? 'Could not read the receipt.')
       }
@@ -394,6 +414,7 @@ function FdForm({
   }
 
   const selectedMember = members.find((member) => member.id === memberId)
+  const memberReady = Boolean(memberId)
   const carry = previous ? suggestedCarry(previous) : null
   const principalNumber = Number(principal.replace(/,/g, ''))
   const carryNote =
@@ -405,6 +426,12 @@ function FdForm({
     event.preventDefault()
     setSaving(true)
     try {
+      const duplicate = duplicateFdAccountError(
+        draft.fd_account_no,
+        depositsForAccountCheck(household),
+        createdFd?.id ?? fd?.id,
+      )
+      if (duplicate) throw new Error(duplicate)
       const saved = isRenew && previous
         ? (await renewFd({
             previous,
@@ -482,6 +509,28 @@ function FdForm({
       {carryNote ? <p className="mt-2 type-body text-muted">{carryNote}</p> : null}
 
       <form className="mt-8 space-y-5 pb-8" onSubmit={(event) => void onSubmit(event)}>
+        <Field id="member" label="Member">
+          <SheetPicker
+            id="member"
+            title="Choose member"
+            hint="Tap to choose member"
+            selectedId={memberId || null}
+            valueLabel={selectedMember?.full_name ?? 'Choose member'}
+            leading={<PickerAvatar name={selectedMember?.full_name} />}
+            options={members.map((member: FamilyMember) => ({
+              id: member.id,
+              label: member.full_name,
+              secondary: member.bank_customer_id
+                ? `CID ${member.bank_customer_id}`
+                : 'No CID',
+              leading: <PickerAvatar name={member.full_name} />,
+            }))}
+            onSelect={applyMember}
+          />
+        </Field>
+
+        {memberReady ? (
+          <>
         <ReceiptPicker
           value={receipt}
           existing={existingReceipt}
@@ -511,25 +560,6 @@ function FdForm({
           </p>
         ))}
 
-        <Field id="member" label="Member">
-          <SheetPicker
-            id="member"
-            title="Choose member"
-            hint="Tap to choose member"
-            selectedId={memberId || null}
-            valueLabel={selectedMember?.full_name ?? 'Choose member'}
-            leading={<PickerAvatar name={selectedMember?.full_name} />}
-            options={members.map((member: FamilyMember) => ({
-              id: member.id,
-              label: member.full_name,
-              secondary: member.bank_customer_id
-                ? `CID ${member.bank_customer_id}`
-                : 'No CID',
-              leading: <PickerAvatar name={member.full_name} />,
-            }))}
-            onSelect={applyMember}
-          />
-        </Field>
 
         <Field id="holderName" label="Holder name" badge={badge('holder_name', holderName)}>
           <Input
@@ -660,11 +690,12 @@ function FdForm({
           </div>
         ) : null}
 
-        <div className="grid grid-cols-2 items-stretch gap-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:items-start sm:gap-3">
           <Field id="fdDate" label="FD date" badge={badge('fd_date', fdDate)}>
             <Input
               id="fdDate"
               type="date"
+              className="min-w-0"
               value={fdDate}
               onChange={(event) => setFdDate(event.target.value)}
             />
@@ -673,6 +704,7 @@ function FdForm({
             <Input
               id="maturityDate"
               type="date"
+              className="min-w-0"
               value={maturityDate}
               onChange={(event) => setMaturityDate(event.target.value)}
             />
@@ -703,6 +735,7 @@ function FdForm({
           <Input
             id="txnDate"
             type="date"
+            className="min-w-0 max-w-full sm:max-w-xs"
             value={txnDate}
             onChange={(event) => setTxnDate(event.target.value)}
           />
@@ -757,6 +790,10 @@ function FdForm({
                 : 'Save'}
           </Button>
         </div>
+          </>
+        ) : (
+          <p className="type-body text-muted">Choose a member to add the receipt and FD details.</p>
+        )}
       </form>
     </Page>
   )

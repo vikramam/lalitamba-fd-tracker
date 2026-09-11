@@ -256,8 +256,8 @@ create index idx_fds_member on public.fixed_deposits (family_member_id);
 create index idx_fds_maturity on public.fixed_deposits (maturity_date);
 create index idx_fds_status on public.fixed_deposits (status);
 create unique index idx_fds_account_unique
-  on public.fixed_deposits (family_id, fd_account_no)
-  where fd_account_no is not null;
+  on public.fixed_deposits (lower(btrim(fd_account_no)))
+  where fd_account_no is not null and btrim(fd_account_no) <> '';
 create index idx_receipts_fd on public.fd_receipts (fd_id);
 create unique index idx_receipts_current
   on public.fd_receipts (fd_id)

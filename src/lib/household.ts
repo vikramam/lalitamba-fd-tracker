@@ -43,10 +43,12 @@ function householdFromRows(
   closures: FdClosure[],
   ocrReviews: OcrFieldReview[],
   isSuperAdmin = false,
+  membershipFamilyIds: string[] = [],
 ): Household {
   return {
     isAppAdmin,
     isSuperAdmin,
+    membershipFamilyIds,
     families,
     members,
     deposits,
@@ -96,6 +98,9 @@ export function demoHousehold(email: string): Household {
   )
 
   if (demo.isAppAdmin) {
+    const membershipFamilyIds = demoMemberships
+      .filter((row) => row.user_id === demo.id)
+      .map((row) => row.family_id)
     return householdFromRows(
       true,
       allFamilies.map((family) => ({ ...family, role: 'app_admin' })),
@@ -106,6 +111,7 @@ export function demoHousehold(email: string): Household {
       allClosures,
       allReviews,
       demo.isSuperAdmin ?? false,
+      membershipFamilyIds,
     )
   }
 
@@ -140,6 +146,7 @@ export function demoHousehold(email: string): Household {
     closures,
     ocrReviews,
     false,
+    [...familyIds],
   )
 }
 
@@ -184,6 +191,7 @@ export async function loadHousehold(user: {
       },
     ]
   })
+  const membershipFamilyIds = families.map((family) => family.id)
 
   if (isAppAdmin) {
     const { data: allFamilies, error } = await supabase
@@ -264,5 +272,6 @@ export async function loadHousehold(user: {
         row.confidence === null || row.confidence === undefined ? null : Number(row.confidence),
     })) as OcrFieldReview[],
     isSuperAdmin,
+    membershipFamilyIds,
   )
 }

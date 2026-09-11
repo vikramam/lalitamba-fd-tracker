@@ -65,11 +65,11 @@ export function LoginPage() {
       <DemoBanner />
       <SetupBanner />
       <main className="page-enter mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
-        <AppLogo className="size-16" />
-        <p className="mt-4 type-login-title text-ink">
+        <AppLogo className="mx-auto size-24" />
+        <p className="mt-4 type-login-title text-center text-ink">
           Lalitamba FD Gadag
         </p>
-        <p className="mt-2 type-body text-muted">
+        <p className="mt-2 type-body text-center text-muted">
           Sign in to the family ledger. New accounts wait for admin approval.
         </p>
 
@@ -127,7 +127,7 @@ export function LoginPage() {
           </div>
         </form>
 
-        <p className="mt-8 type-small leading-relaxed">
+        <p className="mt-8 type-small text-center leading-relaxed">
           Access is limited to your family. Admins see everything.
           {mode === 'demo' ? (
             <>

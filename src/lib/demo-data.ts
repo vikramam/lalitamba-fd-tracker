@@ -9,6 +9,11 @@ export const demoFamilies: Family[] = [
 export const demoMemberships: FamilyMembership[] = [
   {
     family_id: DEMO_IDS.mulgundFamily,
+    user_id: DEMO_IDS.admin,
+    role: 'family_admin',
+  },
+  {
+    family_id: DEMO_IDS.mulgundFamily,
     user_id: DEMO_IDS.vikram,
     role: 'family_admin',
   },

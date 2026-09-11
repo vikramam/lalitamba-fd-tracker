@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { interestCreditedToDate, summarizeDashboard } from '@/lib/dashboard'
 import { demoDeposits, demoMembers } from '@/lib/demo-data'
-import { filterFdRows, matchesFdSearch, sortFdsByMaturity } from '@/lib/fd-list'
+import { filterFdRows, matchesFdSearch, sortFds, sortFdsByMaturity } from '@/lib/fd-list'
 import { fdShareText } from '@/lib/fd-share'
 import { DEMO_IDS } from '@/lib/ids'
 
@@ -17,6 +17,10 @@ describe('dashboard totals', () => {
     expect(summary.lockedInterest).toBe(247500)
     expect(summary.activeCount).toBe(2)
     expect(summary.byMember[0]?.principal).toBe(600000)
+    expect(summary.byMember[0]?.monthlyFds).toBe(1)
+    expect(summary.byMember[0]?.onMaturityFds).toBe(1)
+    expect(summary.monthlyFdCount).toBe(1)
+    expect(summary.onMaturityFdCount).toBe(1)
     expect(summary.interestCredited).toBe(20625)
     expect(summary.quarterlyIncome).toBe(0)
     expect(summary.dueThisMonth).toEqual([])
@@ -82,6 +86,18 @@ describe('fd list helpers', () => {
     expect(matchesFdSearch(monthly, demoMembers, 'nobody')).toBe(false)
   })
 
+  it('lists overdue FDs for a member', () => {
+    const overdue = { ...demoDeposits[0]!, id: 'overdue', maturity_date: '2026-08-01' }
+    const later = { ...demoDeposits[1]!, maturity_date: '2028-12-01' }
+    const rows = filterFdRows(
+      [overdue, later],
+      demoMembers,
+      { due: 'overdue', member: overdue.family_member_id },
+      new Date('2026-09-07'),
+    )
+    expect(rows.map((fd) => fd.id)).toEqual(['overdue'])
+  })
+
   it('hides closed FDs by default and sorts soonest maturity first', () => {
     const closed = { ...demoDeposits[0]!, status: 'closed' as const, maturity_date: '2026-01-01' }
     const later = { ...demoDeposits[1]!, maturity_date: '2028-12-01' }
@@ -89,6 +105,32 @@ describe('fd list helpers', () => {
     const hidden = filterFdRows([closed, later, sooner], demoMembers, {})
     expect(hidden.map((fd) => fd.id)).toEqual([later.id, sooner.id])
     expect(sortFdsByMaturity([later, sooner]).map((fd) => fd.id)).toEqual([sooner.id, later.id])
+  })
+
+  it('sorts by person, amount, and newest receipt date', () => {
+    const vikramSmall = demoDeposits[0]!
+    const vikramLarge = demoDeposits[1]!
+    const other = demoDeposits[2]!
+    expect(sortFds([vikramLarge, other, vikramSmall], 'person', demoMembers).map((fd) => fd.id)).toEqual([
+      other.id,
+      vikramSmall.id,
+      vikramLarge.id,
+    ])
+    expect(sortFds([other, vikramSmall, vikramLarge], 'amount', demoMembers).map((fd) => fd.id)).toEqual([
+      vikramLarge.id,
+      vikramSmall.id,
+      other.id,
+    ])
+    expect(sortFds([vikramSmall, vikramLarge, other], 'receipt', demoMembers).map((fd) => fd.id)).toEqual([
+      other.id,
+      vikramSmall.id,
+      vikramLarge.id,
+    ])
+    expect(sortFds([other, vikramSmall, vikramLarge], 'amount', demoMembers, 'asc').map((fd) => fd.id)).toEqual([
+      other.id,
+      vikramSmall.id,
+      vikramLarge.id,
+    ])
   })
 })
 

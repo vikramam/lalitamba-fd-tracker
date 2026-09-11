@@ -49,14 +49,14 @@ export function ShimmerDashboard() {
           <Shimmer className="h-3 w-36 border-0" />
           <Shimmer className="mt-3 h-8 w-40 rounded-xl border-0" />
           <Shimmer className="mt-2 h-3 w-24 border-0" />
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div key={index} className="surface-card px-2 py-3">
-              <Shimmer className="mx-auto h-4 w-12 border-0" />
-              <Shimmer className="mx-auto mt-2 h-2.5 w-10 border-0" />
-            </div>
-          ))}
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {Array.from({ length: 6 }, (_, index) => (
+              <div key={index} className="surface-card px-2 py-3">
+                <Shimmer className="mx-auto h-4 w-12 border-0" />
+                <Shimmer className="mx-auto mt-2 h-2.5 w-10 border-0" />
+              </div>
+            ))}
+          </div>
         </div>
         <Shimmer className="mt-8 mb-3 h-3 w-24 border-0" />
         <ShimmerRows count={3} />
@@ -163,6 +163,45 @@ export function ShimmerSettingsPage() {
   )
 }
 
+export function ShimmerSettingsHome() {
+  return (
+    <Page>
+      <Screen>
+        <Shimmer className="h-7 w-32 rounded-xl border-0" />
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Shimmer className="size-9 shrink-0 rounded-xl" />
+            <div className="space-y-2">
+              <Shimmer className="h-3.5 w-24 border-0" />
+              <Shimmer className="h-3 w-20 border-0" />
+            </div>
+          </div>
+          <Shimmer className="h-6 w-20 rounded-full" />
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="surface-card min-h-[84px] p-3.5">
+              <Shimmer className="h-3.5 w-20 border-0" />
+              <Shimmer className="mt-2 h-3 w-14 border-0" />
+            </div>
+          ))}
+        </div>
+        <div className="surface-card mt-3.5 overflow-hidden">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between px-3.5 py-3"
+            >
+              <Shimmer className="h-3.5 w-16 border-0" />
+              <Shimmer className="h-6 w-28 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </Screen>
+    </Page>
+  )
+}
+
 export function ShimmerAuth() {
   return (
     <div
@@ -173,8 +212,9 @@ export function ShimmerAuth() {
     >
       <span className="sr-only">Loading</span>
       <div className="w-full max-w-sm">
-        <Shimmer className="h-7 w-48 rounded-xl border-0" />
-        <Shimmer className="mt-2 h-3.5 w-40 border-0" />
+        <Shimmer className="mx-auto size-24 rounded-full" />
+        <Shimmer className="mx-auto mt-4 h-7 w-48 rounded-xl border-0" />
+        <Shimmer className="mx-auto mt-2 h-3.5 w-56 border-0" />
         <div className="hero-card mt-8 space-y-5 p-5">
           <Shimmer className="h-3 w-14 border-0" />
           <Shimmer className="h-11 rounded-[13px]" />

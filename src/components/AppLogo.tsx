@@ -9,9 +9,9 @@ export function AppLogo({
 }) {
   return (
     <img
-      src="/pwa-icon-192.png"
+      src="/updated_logo_2.jpeg"
       alt={alt}
-      className={cn('rounded-2xl object-cover', className)}
+      className={cn('rounded-full object-cover', className)}
     />
   )
 }

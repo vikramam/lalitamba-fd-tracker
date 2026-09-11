@@ -10,7 +10,13 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'pwa-icon-192.png', 'pwa-icon-512.png'],
+      includeAssets: [
+        'favicon.png',
+        'apple-touch-icon.png',
+        'pwa-icon-192.png',
+        'pwa-icon-512.png',
+        'updated_logo_2.jpeg',
+      ],
       workbox: {
         globIgnores: ['**/heic2any-*.js'],
       },

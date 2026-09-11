@@ -14,7 +14,7 @@ import type { Household } from '@/lib/types'
 
 export function FamilyFormPage() {
   const { familyId } = useParams()
-  const { household, loading, reload } = useHousehold()
+  const { allHousehold: household, loading, reload } = useHousehold()
   const isNew = !familyId || familyId === 'new'
   const family = household?.families.find((row) => row.id === familyId)
   const canManage = household ? canManageMembers(household) : false

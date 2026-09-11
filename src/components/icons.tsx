@@ -30,6 +30,16 @@ export function HomeIcon(props: IconProps) {
   )
 }
 
+export function FamilyIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 10.5 12 3.5l9 7V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
+      <circle cx="12" cy="12.5" r="2" />
+      <path d="M8.5 19.5a3.5 3.5 0 0 1 7 0" />
+    </Icon>
+  )
+}
+
 export function PeopleIcon(props: IconProps) {
   return (
     <Icon {...props}>
@@ -63,6 +73,24 @@ export function ChevronIcon(props: IconProps) {
   return (
     <Icon className={cn('size-4', props.className)} {...props}>
       <path d="m9 6 6 6-6 6" />
+    </Icon>
+  )
+}
+
+export function GroupsOpenIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="3" />
+      <path d="M8 12h8" />
+    </Icon>
+  )
+}
+
+export function GroupsClosedIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="3" />
+      <path d="M12 8v8M8 12h8" />
     </Icon>
   )
 }
