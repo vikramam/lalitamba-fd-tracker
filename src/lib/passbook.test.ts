@@ -91,6 +91,28 @@ describe('interest schedule', () => {
     ).toEqual(['2026-08-26'])
   })
 
+  it('does not credit interest when the FD is already matured', () => {
+    const monthly = demoDeposits[0]!
+    expect(
+      subsequentInterestDates(
+        { ...monthly, status: 'matured' },
+        '2026-08-26',
+        [],
+        [],
+        new Date('2026-09-14'),
+      ),
+    ).toEqual([])
+    expect(
+      subsequentInterestDates(
+        { ...monthly, maturity_date: '2026-08-01' },
+        '2026-06-01',
+        [],
+        [],
+        new Date('2026-09-14'),
+      ),
+    ).toEqual([])
+  })
+
   it('does not pick an MS A/c when a member has more than one', () => {
     const one = msAccountsForMember(demoDeposits, DEMO_IDS.vikramMember)
     expect(one).toEqual(['01003MS001396'])

@@ -217,7 +217,7 @@ function MemberForm({
           />
         </div>
 
-        <div className="sticky bottom-20 space-y-3 bg-canvas pt-4 md:bottom-0">
+        <div className="sticky bottom-0 space-y-3 bg-canvas pt-4">
           <Button type="submit" size="lg" disabled={saving}>
             {saving ? 'Saving…' : 'Save'}
           </Button>

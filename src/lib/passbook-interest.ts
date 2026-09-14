@@ -68,9 +68,18 @@ export function subsequentInterestDates(
   renewals: FdRenewal[],
   now = new Date(),
 ) {
+  if (fd.status !== 'active') return []
+  const today = todayIso(now)
+  const maturity = fd.maturity_date?.slice(0, 10) || null
+  if (maturity && maturity <= today) return []
+
   const floor = passbookCreatedOn.slice(0, 10)
   const stop = fdInterestStopDate(fd, closures, renewals, now)
-  return interestPeriodDates(fd, stop).filter((due) => due >= floor)
+  return interestPeriodDates(fd, stop).filter((due) => {
+    if (due < floor) return false
+    if (maturity && due >= maturity) return false
+    return true
+  })
 }
 
 export function msAccountsForMember(deposits: FixedDeposit[], memberId: string) {

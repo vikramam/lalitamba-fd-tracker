@@ -20,11 +20,11 @@ export function AppShell() {
   const { canSwitchFamily } = useHousehold()
 
   return (
-    <div className="flex min-h-svh flex-col bg-canvas">
+    <div className="flex h-svh flex-col overflow-hidden bg-canvas supports-[height:100dvh]:h-dvh">
       <DemoBanner />
       <SetupBanner />
-      <div className="flex flex-1 flex-col md:flex-row">
-        <aside className="hidden w-52 shrink-0 border-r border-line px-4 py-8 md:block">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <aside className="hidden w-52 shrink-0 overflow-y-auto border-r border-line px-4 py-8 md:block">
           <div className="flex items-center gap-2.5 px-2">
             <AppLogo className="size-10" />
             <div>
@@ -53,13 +53,13 @@ export function AppShell() {
           </nav>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col pb-20 md:pb-0">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-none">
           <Outlet />
         </div>
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-10 border-t border-line pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+        className="z-10 shrink-0 border-t border-line pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
         style={{ background: 'var(--bar-bg)' }}
       >
         <div

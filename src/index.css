@@ -87,6 +87,7 @@ html.light {
     background-color: var(--bg);
     color: var(--text);
     color-scheme: dark;
+    overscroll-behavior: none;
   }
 
   html.light {
@@ -214,6 +215,12 @@ html.light {
     font-size: 13.5px;
     font-weight: 400;
     line-height: 1.45;
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']),
+  textarea,
+  select {
+    font-size: 16px;
   }
 
   .type-label {
