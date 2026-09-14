@@ -5,6 +5,8 @@ import {
   demoMemberships,
 } from '@/lib/demo-data'
 import {
+  allDemoPassbookTransactions,
+  allDemoPassbooks,
   readDeletedDemoFamilyIds,
   readDeletedDemoFdIds,
   readDeletedDemoMemberIds,
@@ -19,6 +21,16 @@ import {
 import { mapFixedDeposit, FD_SELECT } from '@/lib/fd-map'
 import { findDemoAccount } from '@/lib/demo-accounts'
 import { demoUserFromEmail } from '@/lib/ids'
+import {
+  isMissingDbObject,
+  mapMemberRow,
+  mapPassbook,
+  mapPassbookTx,
+  MEMBER_SELECT,
+  MEMBER_SELECT_LEGACY,
+  PASSBOOK_SELECT,
+  PASSBOOK_TX_SELECT,
+} from '@/lib/passbooks'
 import { RECEIPT_SELECT, mapFdReceipt } from '@/lib/receipt-map'
 import { supabase } from '@/lib/supabase'
 import type {
@@ -30,7 +42,9 @@ import type {
   FdRenewal,
   FixedDeposit,
   Household,
+  MemberPassbook,
   OcrFieldReview,
+  PassbookTransaction,
 } from '@/lib/types'
 
 function householdFromRows(
@@ -42,6 +56,8 @@ function householdFromRows(
   renewals: FdRenewal[],
   closures: FdClosure[],
   ocrReviews: OcrFieldReview[],
+  passbooks: MemberPassbook[] = [],
+  passbookTransactions: PassbookTransaction[] = [],
   isSuperAdmin = false,
   membershipFamilyIds: string[] = [],
 ): Household {
@@ -56,6 +72,8 @@ function householdFromRows(
     renewals,
     closures,
     ocrReviews,
+    passbooks,
+    passbookTransactions,
   }
 }
 
@@ -97,6 +115,9 @@ export function demoHousehold(email: string): Household {
     (fd) => !deletedFds.has(fd.id),
   )
 
+  const allPassbooks = allDemoPassbooks()
+  const allPassbookTx = allDemoPassbookTransactions()
+
   if (demo.isAppAdmin) {
     const membershipFamilyIds = demoMemberships
       .filter((row) => row.user_id === demo.id)
@@ -110,6 +131,8 @@ export function demoHousehold(email: string): Household {
       allRenewals,
       allClosures,
       allReviews,
+      allPassbooks,
+      allPassbookTx,
       demo.isSuperAdmin ?? false,
       membershipFamilyIds,
     )
@@ -136,6 +159,9 @@ export function demoHousehold(email: string): Household {
   const renewals = allRenewals.filter((row) => familyIds.has(row.family_id))
   const closures = allClosures.filter((row) => familyIds.has(row.family_id))
   const ocrReviews = allReviews.filter((row) => depositIds.has(row.fd_id))
+  const passbooks = allPassbooks.filter((row) => familyIds.has(row.family_id))
+  const passbookIds = new Set(passbooks.map((row) => row.id))
+  const passbookTransactions = allPassbookTx.filter((row) => passbookIds.has(row.passbook_id))
   return householdFromRows(
     false,
     families,
@@ -145,6 +171,8 @@ export function demoHousehold(email: string): Household {
     renewals,
     closures,
     ocrReviews,
+    passbooks,
+    passbookTransactions,
     false,
     [...familyIds],
   )
@@ -206,12 +234,9 @@ export async function loadHousehold(user: {
     }
   }
 
-  const { data: members, error: memberError } = await supabase
-    .from('family_members')
-    .select(
-      'id, family_id, full_name, display_name, linked_user_id, bank_customer_id, notes',
-    )
-  if (memberError) throw new Error(memberError.message)
+  const members = await loadMembers()
+  const passbooks = await loadPassbooks()
+  const passbookTransactions = await loadPassbookTransactions()
 
   const { data: deposits, error: fdError } = await supabase
     .from('fixed_deposits')
@@ -245,7 +270,7 @@ export async function loadHousehold(user: {
   return householdFromRows(
     isAppAdmin,
     families,
-    (members ?? []) as FamilyMember[],
+    members,
     (deposits ?? []).map((row) => mapFixedDeposit(row as Record<string, unknown>)),
     (receipts ?? []).map((row) => mapFdReceipt(row as Record<string, unknown>)),
     ((renewals ?? []) as FdRenewal[]).map((row) => ({
@@ -271,7 +296,43 @@ export async function loadHousehold(user: {
       confidence:
         row.confidence === null || row.confidence === undefined ? null : Number(row.confidence),
     })) as OcrFieldReview[],
+    passbooks,
+    passbookTransactions,
     isSuperAdmin,
     membershipFamilyIds,
   )
+}
+
+async function loadMembers(): Promise<FamilyMember[]> {
+  if (!supabase) return []
+  const withAccount = await supabase.from('family_members').select(MEMBER_SELECT)
+  if (!withAccount.error) {
+    return (withAccount.data ?? []).map((row) => mapMemberRow(row as Record<string, unknown>))
+  }
+  if (!isMissingDbObject(withAccount.error)) throw new Error(withAccount.error.message)
+  const legacy = await supabase.from('family_members').select(MEMBER_SELECT_LEGACY)
+  if (legacy.error) throw new Error(legacy.error.message)
+  return (legacy.data ?? []).map((row) => mapMemberRow(row as Record<string, unknown>))
+}
+
+async function loadPassbooks(): Promise<MemberPassbook[]> {
+  if (!supabase) return []
+  const { data, error } = await supabase.from('member_passbooks').select(PASSBOOK_SELECT)
+  if (error) {
+    if (isMissingDbObject(error)) return []
+    throw new Error(error.message)
+  }
+  return (data ?? []).map((row) => mapPassbook(row as Record<string, unknown>))
+}
+
+async function loadPassbookTransactions(): Promise<PassbookTransaction[]> {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('passbook_transactions')
+    .select(PASSBOOK_TX_SELECT)
+  if (error) {
+    if (isMissingDbObject(error)) return []
+    throw new Error(error.message)
+  }
+  return (data ?? []).map((row) => mapPassbookTx(row as Record<string, unknown>))
 }

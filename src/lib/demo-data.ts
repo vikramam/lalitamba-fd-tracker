@@ -32,6 +32,7 @@ export const demoMembers: FamilyMember[] = [
     display_name: 'Vikram',
     linked_user_id: DEMO_IDS.vikram,
     bank_customer_id: '1700',
+    account_number: null,
     notes: null,
   },
   {
@@ -41,6 +42,7 @@ export const demoMembers: FamilyMember[] = [
     display_name: null,
     linked_user_id: DEMO_IDS.other,
     bank_customer_id: '9999',
+    account_number: null,
     notes: null,
   },
 ]

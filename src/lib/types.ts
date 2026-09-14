@@ -48,7 +48,36 @@ export type FamilyMember = {
   display_name: string | null
   linked_user_id: string | null
   bank_customer_id: string | null
+  account_number: string | null
   notes: string | null
+}
+
+export type PassbookTxnType = 'credit' | 'debit'
+export type PassbookSource = 'manual' | 'fd_interest'
+
+export type MemberPassbook = {
+  id: string
+  family_id: string
+  family_member_id: string
+  created_on: string
+  created_at: string
+}
+
+export type PassbookTransaction = {
+  id: string
+  family_id: string
+  passbook_id: string
+  public_id: string
+  txn_date: string
+  txn_type: PassbookTxnType
+  amount: number
+  balance_after: number
+  reference: string | null
+  remarks: string | null
+  source_type: PassbookSource
+  source_fd_id: string | null
+  interest_period_date: string | null
+  created_at: string
 }
 
 export type FixedDeposit = {
@@ -137,4 +166,6 @@ export type Household = {
   renewals: FdRenewal[]
   closures: FdClosure[]
   ocrReviews: OcrFieldReview[]
+  passbooks: MemberPassbook[]
+  passbookTransactions: PassbookTransaction[]
 }

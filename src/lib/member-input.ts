@@ -3,6 +3,7 @@ export type MemberInput = {
   full_name: string
   display_name?: string
   bank_customer_id?: string
+  account_number?: string
   notes?: string
 }
 
@@ -19,6 +20,7 @@ export function normalizeMemberInput(input: MemberInput) {
     full_name,
     display_name: input.display_name?.trim() || null,
     bank_customer_id: input.bank_customer_id?.trim() || null,
+    account_number: input.account_number?.trim() || null,
     notes: input.notes?.trim() || null,
   }
 }

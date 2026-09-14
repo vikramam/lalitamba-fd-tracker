@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
-import { ChevronIcon } from '@/components/icons'
+import { ChevronIcon, EyeIcon, EyeOffIcon } from '@/components/icons'
 import { ListRow } from '@/components/ListRow'
 import { Page } from '@/components/Page'
 import { ShimmerDashboard } from '@/components/Shimmer'
@@ -26,6 +26,7 @@ export function DashboardPage() {
   const { user } = useAuth()
   const { household, loading, error, familyScope } = useHousehold()
   const { alert } = useDialog()
+  const [showAmounts, setShowAmounts] = useState(false)
 
   useEffect(() => {
     if (error) void alert('Could not load', error)
@@ -41,15 +42,15 @@ export function DashboardPage() {
 
   return (
     <Page>
-      <p className="type-hero-heading text-ink">
-        Hello, {firstName}
-      </p>
+      <p className="type-hero-heading text-ink">Hello, {firstName}</p>
       <p className="mt-1 type-body text-muted">{familyLabel}</p>
 
       <SummaryCarousel
         summary={summary}
         people={household?.members.length ?? 0}
         eyebrow={familyLabel === 'No family yet' ? 'Household' : familyLabel}
+        showAmounts={showAmounts}
+        onToggleAmounts={() => setShowAmounts((value) => !value)}
       />
 
       {summary.pastDue.length > 0 ? (
@@ -130,10 +131,14 @@ function SummaryCarousel({
   summary,
   people,
   eyebrow,
+  showAmounts,
+  onToggleAmounts,
 }: {
   summary: DashboardSummary
   people: number
   eyebrow: string
+  showAmounts: boolean
+  onToggleAmounts: () => void
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
@@ -170,11 +175,21 @@ function SummaryCarousel({
         className="no-scrollbar grid auto-cols-[100%] grid-flow-col items-start gap-3 overflow-x-auto snap-x snap-mandatory"
       >
         <div className="flex h-full snap-start flex-col">
-          <OverallSlide summary={summary} people={people} eyebrow={eyebrow} />
+          <OverallSlide
+            summary={summary}
+            people={people}
+            eyebrow={eyebrow}
+            showAmounts={showAmounts}
+            onToggleAmounts={onToggleAmounts}
+          />
         </div>
         {summary.byMember.map((member) => (
           <div key={member.memberId} className="flex h-full snap-start flex-col">
-            <MemberSlide member={member} />
+            <MemberSlide
+              member={member}
+              showAmounts={showAmounts}
+              onToggleAmounts={onToggleAmounts}
+            />
           </div>
         ))}
       </div>
@@ -222,18 +237,27 @@ function OverallSlide({
   summary,
   people,
   eyebrow,
+  showAmounts,
+  onToggleAmounts,
 }: {
   summary: DashboardSummary
   people: number
   eyebrow: string
+  showAmounts: boolean
+  onToggleAmounts: () => void
 }) {
   return (
     <section className="hero-card relative flex flex-col overflow-hidden p-5">
       <img src="/updated_logo_2.jpeg" alt="" aria-hidden="true" className="hero-logo-mark" />
       <div className="relative z-10 max-w-[62%]">
-        <p className="type-label">{eyebrow}</p>
-        <p className="type-card-title mt-1.5 text-ink">Principal outstanding</p>
-        <p className="type-stat-hero mt-3 text-ink">{formatInrLakhs(summary.principal)}</p>
+        <div className="flex items-center gap-2">
+          <p className="type-card-title min-w-0 truncate text-ink">{eyebrow}</p>
+          <AmountEyeButton show={showAmounts} onToggle={onToggleAmounts} />
+        </div>
+        <p className="type-label mt-1.5">Principal outstanding</p>
+        <p className="type-stat-hero mt-3 text-ink">
+          {amountText(showAmounts, formatInrLakhs(summary.principal))}
+        </p>
         {summary.dueThisMonth.length > 0 ? (
           <Link to="/fds?due=month" className="type-body mt-2 block text-warn">
             <span className="type-num">{summary.dueThisMonth.length}</span>
@@ -245,33 +269,46 @@ function OverallSlide({
         <Stat label="FDs" value={String(summary.activeCount)} to="/fds" wash />
         <Stat
           label="/ month"
-          value={formatInr(summary.monthlyIncome)}
+          value={amountText(showAmounts, formatInr(summary.monthlyIncome))}
           count={summary.monthlyFdCount}
           to="/fds?mode=monthly"
           wash
         />
         <Stat
           label="/ quarter"
-          value={formatInr(summary.quarterlyIncome)}
+          value={amountText(showAmounts, formatInr(summary.quarterlyIncome))}
           count={summary.quarterlyFdCount}
           to="/fds?mode=quarterly"
           wash
         />
         <Stat
           label="Maturity"
-          value={formatInrLakhs(summary.maturityTotal)}
+          value={amountText(showAmounts, formatInrLakhs(summary.maturityTotal))}
           count={summary.onMaturityFdCount}
           to="/fds?view=maturity"
           wash
         />
-        <Stat label="Credited" value={formatInr(summary.interestCredited)} to="/fds?view=credited" wash />
+        <Stat
+          label="Credited"
+          value={amountText(showAmounts, formatInr(summary.interestCredited))}
+          to="/fds?view=credited"
+          wash
+        />
         <Stat label="People" value={String(people)} to="/members" wash />
       </div>
     </section>
   )
 }
 
-function MemberSlide({ member }: { member: MemberTotal }) {
+function MemberSlide({
+  member,
+  showAmounts,
+  onToggleAmounts,
+}: {
+  member: MemberTotal
+  showAmounts: boolean
+  onToggleAmounts: () => void
+}) {
   const memberQuery = `member=${member.memberId}`
   return (
     <section className="hero-card relative flex flex-col overflow-hidden p-5">
@@ -281,9 +318,12 @@ function MemberSlide({ member }: { member: MemberTotal }) {
             <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-inner type-micro font-semibold text-ink">
               {initials(member.name)}
             </span>
-            <p className="type-card-title truncate text-ink">{member.name}</p>
+            <p className="type-card-title min-w-0 truncate text-ink">{member.name}</p>
+            <AmountEyeButton show={showAmounts} onToggle={onToggleAmounts} />
           </div>
-          <p className="type-stat-hero mt-3 text-ink">{formatInrLakhs(member.principal)}</p>
+          <p className="type-stat-hero mt-3 text-ink">
+            {amountText(showAmounts, formatInrLakhs(member.principal))}
+          </p>
         </div>
         <div className="flex w-[7.25rem] shrink-0 flex-col items-end gap-1.5">
           <span className="rounded-full border border-line px-2.5 py-0.5 type-small">Member</span>
@@ -309,30 +349,60 @@ function MemberSlide({ member }: { member: MemberTotal }) {
         <Stat label="FDs" value={String(member.count)} to={`/fds?${memberQuery}`} />
         <Stat
           label="/ month"
-          value={formatInr(member.monthlyIncome)}
+          value={amountText(showAmounts, formatInr(member.monthlyIncome))}
           count={member.monthlyFds}
           to={`/fds?${memberQuery}&mode=monthly`}
         />
         <Stat
           label="/ quarter"
-          value={formatInr(member.quarterlyIncome)}
+          value={amountText(showAmounts, formatInr(member.quarterlyIncome))}
           count={member.quarterlyFds}
           to={`/fds?${memberQuery}&mode=quarterly`}
         />
         <Stat
           label="Maturity"
-          value={formatInrLakhs(member.maturityTotal)}
+          value={amountText(showAmounts, formatInrLakhs(member.maturityTotal))}
           count={member.onMaturityFds}
           to={`/fds?${memberQuery}&view=maturity`}
         />
         <Stat
           label="Credited"
-          value={formatInr(member.interestCredited)}
+          value={amountText(showAmounts, formatInr(member.interestCredited))}
           to={`/fds?${memberQuery}&view=credited`}
         />
         <div className="invisible" aria-hidden="true" />
       </div>
     </section>
+  )
+}
+
+const HIDDEN_AMOUNT = '**'
+
+function amountText(show: boolean, value: string) {
+  return show ? value : HIDDEN_AMOUNT
+}
+
+function AmountEyeButton({
+  show,
+  onToggle,
+}: {
+  show: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={show ? 'Hide amounts' : 'Show amounts'}
+      aria-pressed={show}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onToggle()
+      }}
+      className="-ml-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted active:scale-95"
+    >
+      {show ? <EyeIcon className="size-4" /> : <EyeOffIcon className="size-4" />}
+    </button>
   )
 }
 

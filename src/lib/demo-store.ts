@@ -8,7 +8,9 @@ import type {
   FdReceipt,
   FdRenewal,
   FixedDeposit,
+  MemberPassbook,
   OcrFieldReview,
+  PassbookTransaction,
 } from '@/lib/types'
 
 const FAMILY_KEY = 'lalitamba.demo.families'
@@ -21,6 +23,8 @@ const RECEIPT_KEY = 'lalitamba.demo.receipts'
 const REVIEW_KEY = 'lalitamba.demo.ocrReviews'
 const RENEWAL_KEY = 'lalitamba.demo.renewals'
 const CLOSURE_KEY = 'lalitamba.demo.closures'
+const PASSBOOK_KEY = 'lalitamba.demo.passbooks'
+const PASSBOOK_TX_KEY = 'lalitamba.demo.passbookTx'
 
 export type DemoFamilyExtra = Family & { created_by: string }
 export type DemoMemberExtra = FamilyMember
@@ -90,8 +94,9 @@ export function updateDemoFamily(id: string, name: string): Family | null {
 }
 
 export function addDemoMember(
-  input: Omit<FamilyMember, 'id' | 'linked_user_id'> & {
+  input: Omit<FamilyMember, 'id' | 'linked_user_id' | 'account_number'> & {
     linked_user_id?: string | null
+    account_number?: string | null
   },
 ): FamilyMember {
   const member: FamilyMember = {
@@ -100,10 +105,16 @@ export function addDemoMember(
     full_name: input.full_name.trim(),
     display_name: input.display_name?.trim() || null,
     bank_customer_id: input.bank_customer_id?.trim() || null,
+    account_number: input.account_number?.trim() || null,
     linked_user_id: input.linked_user_id ?? null,
     notes: input.notes?.trim() || null,
   }
   writeJson(MEMBER_KEY, [...readDemoMembers(), member])
+  addDemoPassbook({
+    family_id: member.family_id,
+    family_member_id: member.id,
+    created_on: new Date().toISOString().slice(0, 10),
+  })
   return member
 }
 
@@ -116,6 +127,17 @@ export function deleteDemoMember(id: string) {
     MEMBER_KEY,
     readDemoMembers().filter((member) => member.id !== id),
   )
+  const passbooks = readDemoPassbooks().filter((row) => row.family_member_id !== id)
+  const removed = new Set(
+    readDemoPassbooks()
+      .filter((row) => row.family_member_id === id)
+      .map((row) => row.id),
+  )
+  writeJson(PASSBOOK_KEY, passbooks)
+  writeJson(
+    PASSBOOK_TX_KEY,
+    readDemoPassbookTransactions().filter((row) => !removed.has(row.passbook_id)),
+  )
   const deleted = new Set(readDeletedDemoMemberIds())
   deleted.add(id)
   writeJson(DELETED_MEMBER_KEY, [...deleted])
@@ -123,7 +145,9 @@ export function deleteDemoMember(id: string) {
 
 export function updateDemoMember(
   id: string,
-  input: Pick<FamilyMember, 'full_name' | 'display_name' | 'bank_customer_id' | 'notes'>,
+  input: Pick<FamilyMember, 'full_name' | 'display_name' | 'bank_customer_id' | 'notes'> & {
+    account_number?: string | null
+  },
 ): FamilyMember | null {
   const extras = readDemoMembers()
   const extraIndex = extras.findIndex((member) => member.id === id)
@@ -138,6 +162,10 @@ export function updateDemoMember(
     full_name: input.full_name.trim(),
     display_name: input.display_name?.trim() || null,
     bank_customer_id: input.bank_customer_id?.trim() || null,
+    account_number:
+      input.account_number === undefined
+        ? current.account_number
+        : input.account_number?.trim() || null,
     notes: input.notes?.trim() || null,
   }
   if (extraIndex === -1) extras.push(next)
@@ -305,6 +333,74 @@ export function addDemoClosure(input: Omit<FdClosure, 'id'>): FdClosure {
   return row
 }
 
+export function readDemoPassbooks(): MemberPassbook[] {
+  return readJson<MemberPassbook>(PASSBOOK_KEY)
+}
+
+export function allDemoPassbooks(): MemberPassbook[] {
+  const deletedMembers = new Set(readDeletedDemoMemberIds())
+  return readDemoPassbooks().filter((row) => !deletedMembers.has(row.family_member_id))
+}
+
+export function addDemoPassbook(
+  input: Pick<MemberPassbook, 'family_id' | 'family_member_id' | 'created_on'>,
+): MemberPassbook {
+  const existing = allDemoPassbooks().find(
+    (row) => row.family_member_id === input.family_member_id,
+  )
+  if (existing) return existing
+  const row: MemberPassbook = {
+    id: crypto.randomUUID(),
+    family_id: input.family_id,
+    family_member_id: input.family_member_id,
+    created_on: input.created_on,
+    created_at: new Date().toISOString(),
+  }
+  writeJson(PASSBOOK_KEY, [...readDemoPassbooks(), row])
+  return row
+}
+
+export function readDemoPassbookTransactions(): PassbookTransaction[] {
+  return readJson<PassbookTransaction>(PASSBOOK_TX_KEY)
+}
+
+export function allDemoPassbookTransactions(): PassbookTransaction[] {
+  const passbookIds = new Set(allDemoPassbooks().map((row) => row.id))
+  return readDemoPassbookTransactions().filter((row) => passbookIds.has(row.passbook_id))
+}
+
+export function addDemoPassbookTx(
+  input: Omit<PassbookTransaction, 'id' | 'created_at'> & {
+    id?: string
+    created_at?: string
+  },
+): PassbookTransaction {
+  const row: PassbookTransaction = {
+    ...input,
+    id: input.id ?? crypto.randomUUID(),
+    created_at: input.created_at ?? new Date().toISOString(),
+  }
+  writeJson(PASSBOOK_TX_KEY, [...readDemoPassbookTransactions(), row])
+  return row
+}
+
+export function replaceDemoPassbookBalances(rows: PassbookTransaction[]) {
+  const byId = new Map(rows.map((row) => [row.id, row.balance_after]))
+  writeJson(
+    PASSBOOK_TX_KEY,
+    readDemoPassbookTransactions().map((row) =>
+      byId.has(row.id) ? { ...row, balance_after: byId.get(row.id)! } : row,
+    ),
+  )
+}
+
+export function deleteDemoPassbookTx(id: string) {
+  writeJson(
+    PASSBOOK_TX_KEY,
+    readDemoPassbookTransactions().filter((row) => row.id !== id),
+  )
+}
+
 export function resetDemoStore() {
   localStorage.removeItem(FAMILY_KEY)
   localStorage.removeItem(DELETED_FAMILY_KEY)
@@ -316,6 +412,9 @@ export function resetDemoStore() {
   localStorage.removeItem(REVIEW_KEY)
   localStorage.removeItem(RENEWAL_KEY)
   localStorage.removeItem(CLOSURE_KEY)
+  localStorage.removeItem(PASSBOOK_KEY)
+  localStorage.removeItem(PASSBOOK_TX_KEY)
+  localStorage.removeItem('lalitamba.passbook.skippedInterest')
   localStorage.removeItem('lalitamba.demo.accounts')
 }
 

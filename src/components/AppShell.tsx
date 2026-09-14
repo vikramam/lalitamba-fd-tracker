@@ -4,13 +4,14 @@ import { AppLogo } from '@/components/AppLogo'
 import { DemoBanner } from '@/components/DemoBanner'
 import { FamilySwitcher } from '@/components/FamilySwitcher'
 import { SetupBanner } from '@/components/SetupBanner'
-import { GearIcon, HomeIcon, LedgerIcon, PeopleIcon } from '@/components/icons'
+import { GearIcon, HomeIcon, LedgerIcon, PassbookIcon, PeopleIcon } from '@/components/icons'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { cn } from '@/lib/utils'
 
 const tabs = [
   { to: '/dashboard', label: 'Home', end: true, icon: HomeIcon },
   { to: '/fds', label: 'FDs', end: true, icon: LedgerIcon },
+  { to: '/passbooks', label: 'Passbook', end: false, icon: PassbookIcon },
   { to: '/members', label: 'Members', end: false, icon: PeopleIcon },
   { to: '/settings', label: 'Settings', end: true, icon: GearIcon },
 ]
@@ -64,14 +65,14 @@ export function AppShell() {
         <div
           className={cn(
             'mx-auto grid max-w-lg',
-            canSwitchFamily ? 'grid-cols-5' : 'grid-cols-4',
+            canSwitchFamily ? 'grid-cols-6' : 'grid-cols-5',
           )}
         >
-          {tabs.slice(0, 3).map((tab) => (
+          {tabs.slice(0, 4).map((tab) => (
             <MobileTab key={tab.to} tab={tab} />
           ))}
           <FamilySwitcher variant="tab" />
-          <MobileTab tab={tabs[3]!} />
+          <MobileTab tab={tabs[4]!} />
         </div>
       </nav>
     </div>

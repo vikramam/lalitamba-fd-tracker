@@ -83,6 +83,7 @@ function MemberForm({
   const [fullName, setFullName] = useState(member?.full_name ?? '')
   const [displayName, setDisplayName] = useState(member?.display_name ?? '')
   const [cid, setCid] = useState(member?.bank_customer_id ?? '')
+  const [accountNumber, setAccountNumber] = useState(member?.account_number ?? '')
   const [notes, setNotes] = useState(member?.notes ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -101,6 +102,7 @@ function MemberForm({
         full_name: fullName,
         display_name: displayName,
         bank_customer_id: cid,
+        account_number: accountNumber,
         notes,
       }
       if (isNew) {
@@ -193,6 +195,16 @@ function MemberForm({
             value={cid}
             onChange={(event) => setCid(event.target.value)}
             placeholder="1700"
+            className="font-mono"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="accountNumber">Account number</Label>
+          <Input
+            id="accountNumber"
+            value={accountNumber}
+            onChange={(event) => setAccountNumber(event.target.value)}
+            placeholder="01003MS001396"
             className="font-mono"
           />
         </div>

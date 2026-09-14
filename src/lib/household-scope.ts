@@ -16,6 +16,10 @@ export function scopeHousehold(household: Household, scope: string): Household {
     renewals: household.renewals.filter((row) => row.family_id === scope),
     closures: household.closures.filter((row) => row.family_id === scope),
     ocrReviews: household.ocrReviews.filter((row) => depositIds.has(row.fd_id)),
+    passbooks: household.passbooks.filter((row) => row.family_id === scope),
+    passbookTransactions: household.passbookTransactions.filter(
+      (row) => row.family_id === scope,
+    ),
   }
 }
 

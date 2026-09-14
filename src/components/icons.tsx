@@ -147,6 +147,24 @@ export function PlusIcon(props: IconProps) {
   )
 }
 
+export function MinusIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M5 12h14" />
+    </Icon>
+  )
+}
+
+export function PassbookIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M6 4.5h11.5A1.5 1.5 0 0 1 19 6v13.5H7.5A1.5 1.5 0 0 1 6 18V4.5z" />
+      <path d="M6 4.5A1.5 1.5 0 0 0 4.5 6v12A1.5 1.5 0 0 0 6 19.5" />
+      <path d="M9 8h6M9 12h6" />
+    </Icon>
+  )
+}
+
 export function PencilIcon(props: IconProps) {
   return (
     <Icon {...props}>
@@ -191,6 +209,25 @@ export function ShareIcon(props: IconProps) {
       <path d="M12 3v11" />
       <path d="m8 7 4-4 4 4" />
       <path d="M5 13v6.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V13" />
+    </Icon>
+  )
+}
+
+export function EyeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.6 12S6.2 6.8 12 6.8 21.4 12 21.4 12 17.8 17.2 12 17.2 2.6 12 2.6 12z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </Icon>
+  )
+}
+
+export function EyeOffIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.6 12S6.2 6.8 12 6.8 21.4 12 21.4 12 17.8 17.2 12 17.2 2.6 12 2.6 12z" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M4.2 19.8 19.8 4.2" />
     </Icon>
   )
 }

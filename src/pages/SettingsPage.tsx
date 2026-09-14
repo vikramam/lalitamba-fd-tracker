@@ -18,18 +18,23 @@ import {
 import { ALL_FAMILIES_SCOPE } from '@/lib/household-scope'
 import { initials } from '@/lib/initials'
 import { canManageMembers } from '@/lib/members'
+import {
+  formatGenerateMessage,
+  generateMissingPassbooks,
+} from '@/lib/passbooks'
 import { applyTheme, readTheme, type Theme } from '@/lib/theme'
 import type { Household } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export function SettingsPage() {
   const { user, signOut } = useAuth()
-  const { household, allHousehold, loading, familyScope } = useHousehold()
-  const { alertError } = useDialog()
+  const { household, allHousehold, loading, familyScope, reload } = useHousehold()
+  const { alert, alertError, confirm } = useDialog()
   const canManage = household ? canManageMembers(household) : false
   const [theme, setTheme] = useState<Theme>(() => readTheme())
   const [fontScale, setFontScale] = useState<FontScale>(() => readFontScale())
   const [exporting, setExporting] = useState(false)
+  const [generating, setGenerating] = useState(false)
 
   if (loading) return <ShimmerSettingsHome />
 
@@ -60,6 +65,27 @@ export function SettingsPage() {
     }
   }
 
+  async function onGeneratePassbooks() {
+    if (!household || generating) return
+    const ok = await confirm({
+      title: 'Generate passbooks',
+      message:
+        'Create an empty passbook for each member who does not have one. Existing books and account numbers are left as they are.',
+      confirmLabel: 'Generate',
+    })
+    if (!ok) return
+    setGenerating(true)
+    try {
+      const result = await generateMissingPassbooks(household)
+      await reload()
+      await alert('Passbooks ready', formatGenerateMessage(result))
+    } catch (cause) {
+      void alertError(cause, 'Could not generate passbooks.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   const tools: ToolTileProps[] = []
   if (household?.isAppAdmin) {
     tools.push({ title: 'Accounts', hint: 'Approvals', to: '/settings/accounts' })
@@ -67,6 +93,12 @@ export function SettingsPage() {
   if (household && canManage) {
     tools.push({ title: 'Family', hint: 'Add or edit', to: '/settings/families' })
     tools.push({ title: 'Move FDs', hint: 'Reassign', to: '/settings/move-fds' })
+    tools.push({
+      title: 'Passbooks',
+      hint: generating ? 'Generating…' : 'Create missing',
+      disabled: generating,
+      onClick: () => void onGeneratePassbooks(),
+    })
   }
   if (household) {
     tools.push({

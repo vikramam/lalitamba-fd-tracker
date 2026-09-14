@@ -15,6 +15,20 @@ export function formatDate(iso: string | null) {
 }
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_FULL = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
 
 function dayOrdinal(day: number) {
   const teen = day % 100
@@ -43,6 +57,14 @@ export function formatDateShort(iso: string | null) {
   const monthName = MONTH_NAMES[Number(month) - 1]
   if (!monthName) return iso
   return `${dayOrdinal(Number(date))} ${monthName} ${year.slice(2)}`
+}
+
+export function formatMonthHeading(iso: string | null) {
+  if (!iso) return '—'
+  const year = iso.slice(0, 4)
+  const month = MONTH_FULL[Number(iso.slice(5, 7)) - 1]
+  if (!month || year.length !== 4) return iso
+  return `${month} ${year}`
 }
 
 export function formatDaysOverdue(days: number) {

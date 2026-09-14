@@ -20,6 +20,8 @@ import { MembersPage } from '@/pages/MembersPage'
 import { AdminAccountsPage } from '@/pages/AdminAccountsPage'
 import { ManageFamiliesPage } from '@/pages/ManageFamiliesPage'
 import { MoveFdsPage } from '@/pages/MoveFdsPage'
+import { PassbookListPage } from '@/pages/PassbookListPage'
+import { PassbookPage } from '@/pages/PassbookPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
 export default function App() {
@@ -52,6 +54,8 @@ export default function App() {
                 <Route path="/fds/:fdId/close" element={<CloseFdPage />} />
                 <Route path="/fds/:fdId/receipt" element={<ReceiptViewerPage />} />
                 <Route path="/fds/:fdId" element={<FdDetailPage />} />
+                <Route path="/passbooks" element={<PassbookListPage />} />
+                <Route path="/passbooks/:memberId" element={<PassbookPage />} />
                 <Route path="/settings/accounts" element={<AdminAccountsPage />} />
                 <Route path="/settings/families" element={<ManageFamiliesPage />} />
                 <Route path="/settings/move-fds" element={<MoveFdsPage />} />

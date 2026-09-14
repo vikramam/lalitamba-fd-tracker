@@ -74,6 +74,7 @@ describe('normalizeMemberInput', () => {
       display_name: 'Amrutmati',
       bank_customer_id: '1700',
       notes: 'wife',
+      account_number: null,
     })
   })
 })

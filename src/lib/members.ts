@@ -10,6 +10,12 @@ import {
   normalizeMemberInput,
   type MemberInput,
 } from '@/lib/member-input'
+import {
+  isMissingDbObject,
+  mapMemberRow,
+  MEMBER_SELECT,
+  MEMBER_SELECT_LEGACY,
+} from '@/lib/passbooks'
 import { supabase } from '@/lib/supabase'
 import type { FamilyMember, Household } from '@/lib/types'
 
@@ -88,12 +94,27 @@ export async function createMember(input: MemberInput): Promise<FamilyMember> {
   const { data, error } = await supabase
     .from('family_members')
     .insert(row)
-    .select(
-      'id, family_id, full_name, display_name, linked_user_id, bank_customer_id, notes',
-    )
+    .select(MEMBER_SELECT)
     .single()
-  if (error) throw new Error(error.message)
-  return data as FamilyMember
+  if (error) {
+    if (isMissingDbObject(error)) {
+      const legacy = await supabase
+        .from('family_members')
+        .insert({
+          family_id: row.family_id,
+          full_name: row.full_name,
+          display_name: row.display_name,
+          bank_customer_id: row.bank_customer_id,
+          notes: row.notes,
+        })
+        .select(MEMBER_SELECT_LEGACY)
+        .single()
+      if (legacy.error) throw new Error(legacy.error.message)
+      return mapMemberRow(legacy.data as Record<string, unknown>)
+    }
+    throw new Error(error.message)
+  }
+  return mapMemberRow(data as Record<string, unknown>)
 }
 
 export async function updateMember(
@@ -113,15 +134,31 @@ export async function updateMember(
       full_name: row.full_name,
       display_name: row.display_name,
       bank_customer_id: row.bank_customer_id,
+      account_number: row.account_number,
       notes: row.notes,
     })
     .eq('id', id)
-    .select(
-      'id, family_id, full_name, display_name, linked_user_id, bank_customer_id, notes',
-    )
+    .select(MEMBER_SELECT)
     .single()
-  if (error) throw new Error(error.message)
-  return data as FamilyMember
+  if (error) {
+    if (isMissingDbObject(error)) {
+      const legacy = await supabase
+        .from('family_members')
+        .update({
+          full_name: row.full_name,
+          display_name: row.display_name,
+          bank_customer_id: row.bank_customer_id,
+          notes: row.notes,
+        })
+        .eq('id', id)
+        .select(MEMBER_SELECT_LEGACY)
+        .single()
+      if (legacy.error) throw new Error(legacy.error.message)
+      return mapMemberRow(legacy.data as Record<string, unknown>)
+    }
+    throw new Error(error.message)
+  }
+  return mapMemberRow(data as Record<string, unknown>)
 }
 
 export function memberDeleteError(household: Household, memberId: string) {
