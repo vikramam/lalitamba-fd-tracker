@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { CollapseGroups, useCollapseGroup } from '@/components/CollapseGroups'
 import { ChevronIcon } from '@/components/icons'
 import { Page, ScreenTitle } from '@/components/Page'
+import { PassbookRefreshButton } from '@/components/PassbookRefreshButton'
 import { ShimmerListPage } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
 import { useDialog } from '@/hooks/DialogProvider'
@@ -11,14 +12,15 @@ import { useHousehold } from '@/hooks/HouseholdProvider'
 import { formatDate, formatInr } from '@/lib/format'
 import { initials } from '@/lib/initials'
 import { canManageMembers } from '@/lib/members'
-import { lastTxnDate, passbookBalance, txsForPassbook } from '@/lib/passbooks'
+import { canWritePassbook, lastTxnDate, passbookBalance, txsForPassbook } from '@/lib/passbooks'
 import type { FamilyMember, Household } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export function PassbookListPage() {
-  const { household, loading, error } = useHousehold()
+  const { household, loading, error, reload } = useHousehold()
   const { alert } = useDialog()
   const canManage = household ? canManageMembers(household) : false
+  const canRefresh = household ? canWritePassbook(household) : false
 
   useEffect(() => {
     if (error) void alert('Could not load', error)
@@ -31,7 +33,15 @@ export function PassbookListPage() {
   return (
     <Page>
       <CollapseGroups>
-        <ScreenTitle eyebrow="Accounts" title="Passbook" />
+        <ScreenTitle
+          eyebrow="Accounts"
+          title="Passbook"
+          action={
+            household && canRefresh ? (
+              <PassbookRefreshButton household={household} onSynced={reload} />
+            ) : null
+          }
+        />
         <p className="mt-3 type-body text-muted">
           Tap a member to open their passbook. New books start empty until you post a
           credit or debit, or later interest is due.

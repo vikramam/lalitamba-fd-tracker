@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { CollapseGroups, useCollapseGroup } from '@/components/CollapseGroups'
 import { ChevronIcon } from '@/components/icons'
 import { AddIconLink, Page, ScreenTitle } from '@/components/Page'
+import { PassbookRefreshButton } from '@/components/PassbookRefreshButton'
 import { ShimmerListPage } from '@/components/Shimmer'
 import { Button } from '@/components/ui/button'
 import { useDialog } from '@/hooks/DialogProvider'
@@ -11,13 +12,15 @@ import { useHousehold } from '@/hooks/HouseholdProvider'
 import { formatInr } from '@/lib/format'
 import { initials } from '@/lib/initials'
 import { canManageMembers } from '@/lib/members'
+import { canWritePassbook, passbookBalance } from '@/lib/passbooks'
 import type { FamilyMember, Household } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export function MembersPage() {
-  const { household, loading, error } = useHousehold()
+  const { household, loading, error, reload } = useHousehold()
   const { alert } = useDialog()
   const canManage = household ? canManageMembers(household) : false
+  const canRefresh = household ? canWritePassbook(household) : false
 
   useEffect(() => {
     if (error) void alert('Could not load', error)
@@ -33,11 +36,19 @@ export function MembersPage() {
         <ScreenTitle
           eyebrow="People"
           title="Members"
-          action={canManage ? <AddIconLink to="/members/new" label="Add member" /> : null}
+          action={
+            <div className="flex items-center gap-2">
+              {household && canRefresh ? (
+                <PassbookRefreshButton household={household} onSynced={reload} />
+              ) : null}
+              {canManage ? <AddIconLink to="/members/new" label="Add member" /> : null}
+            </div>
+          }
         />
 
         <p className="mt-3 type-body text-muted">
-          Tap a name to see their FDs. Add or edit a family in Settings.
+          Tap a name to see their FDs. Refresh posts due passbook interest and updates
+          balances.
         </p>
 
         {household && household.families.length === 0 ? (
@@ -129,7 +140,7 @@ function MemberRow({
   const fds = (household?.deposits ?? []).filter(
     (fd) => fd.family_member_id === member.id && fd.status === 'active',
   )
-  const principal = fds.reduce((sum, fd) => sum + fd.principal_amount, 0)
+  const balance = household ? passbookBalance(household, member.id) : 0
 
   return (
     <li>
@@ -150,13 +161,13 @@ function MemberRow({
             ) : (
               'No CID'
             )}
+            {' · '}
+            <span className="type-num">{fds.length}</span> {fds.length === 1 ? 'FD' : 'FDs'}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="type-list-value">{formatInr(principal)}</p>
-          <p className="type-small">
-            <span className="type-num">{fds.length}</span> {fds.length === 1 ? 'FD' : 'FDs'}
-          </p>
+          <p className="type-list-value">{formatInr(balance)}</p>
+          <p className="type-small">Passbook</p>
         </div>
       </Link>
     </li>

@@ -19,7 +19,7 @@ import {
   withRunningBalances,
   wouldGoNegative,
 } from '@/lib/passbook-ledger'
-import { generateMissingPassbooks, deletePassbookTransaction, syncPassbookInterest } from '@/lib/passbooks'
+import { generateMissingPassbooks, deletePassbookTransaction, syncHouseholdPassbookInterest, syncPassbookInterest } from '@/lib/passbooks'
 import type { PassbookTransaction } from '@/lib/types'
 
 const memory = new Map<string, string>()
@@ -240,6 +240,18 @@ describe('passbook generation', () => {
     const again = await syncPassbookInterest(next, passbook, new Date('2026-09-14'))
     expect(again.added).toBe(0)
     expect(again.household.passbookTransactions).toHaveLength(1)
+  })
+
+  it('refreshes interest across every member passbook', async () => {
+    addDemoPassbook({
+      family_id: DEMO_IDS.mulgundFamily,
+      family_member_id: DEMO_IDS.vikramMember,
+      created_on: '2026-08-26',
+    })
+    const household = demoHousehold('vikram@family.test')
+    const { added } = await syncHouseholdPassbookInterest(household, new Date('2026-09-14'))
+    expect(added).toBe(1)
+    expect(demoHousehold('vikram@family.test').passbookTransactions).toHaveLength(1)
   })
 
   it('lets a super admin delete a transaction without posting it again', async () => {

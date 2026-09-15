@@ -382,6 +382,29 @@ export async function syncPassbookInterest(
   return { added, household: current }
 }
 
+export async function syncHouseholdPassbookInterest(
+  household: Household,
+  now = new Date(),
+) {
+  let current = household
+  let added = 0
+
+  for (const member of household.members) {
+    const book = await ensurePassbook(current, member)
+    current = {
+      ...current,
+      passbooks: current.passbooks.some((row) => row.id === book.id)
+        ? current.passbooks
+        : [...current.passbooks, book],
+    }
+    const result = await syncPassbookInterest(current, book, now)
+    added += result.added
+    current = result.household
+  }
+
+  return { added, household: current }
+}
+
 export async function deletePassbookTransaction(
   household: Household,
   row: PassbookTransaction,
@@ -555,6 +578,12 @@ export function formatGenerateMessage(result: GeneratePassbooksResult) {
     )
   }
   return parts.join(' ')
+}
+
+export function formatSyncInterestMessage(added: number) {
+  if (added === 0) return 'No new interest was due. Balances are up to date.'
+  if (added === 1) return 'Posted 1 interest credit. Balances are updated.'
+  return `Posted ${added} interest credits. Balances are updated.`
 }
 
 export function lastTxnDate(rows: PassbookTransaction[]) {
