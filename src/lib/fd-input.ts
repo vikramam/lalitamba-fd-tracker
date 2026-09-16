@@ -17,6 +17,8 @@ export type FdDraft = {
   interest_mode: InterestMode
   monthly_interest_amount?: number | string | null
   interest_credit_account?: string
+  credit_interest_to_bank?: boolean
+  credit_interest_to_bank_enabled_at?: string | null
   maturity_value?: number | string | null
   fd_date?: string
   transaction_date?: string
@@ -78,7 +80,10 @@ function emptyToNull(value?: string) {
 export function normalizeFdInput(
   draft: FdDraft,
   members: FamilyMember[],
-  current?: Pick<FixedDeposit, 'status'>,
+  current?: Pick<
+    FixedDeposit,
+    'status' | 'credit_interest_to_bank' | 'credit_interest_to_bank_enabled_at'
+  >,
 ): FdWrite {
   const member = members.find((row) => row.id === draft.family_member_id)
   if (!member) {
@@ -166,6 +171,14 @@ export function normalizeFdInput(
     tenure_label,
     interest_mode,
     ...monthly,
+    credit_interest_to_bank:
+      paysOutInterest(interest_mode) &&
+      (draft.credit_interest_to_bank ?? current?.credit_interest_to_bank ?? false),
+    credit_interest_to_bank_enabled_at: paysOutInterest(interest_mode)
+      ? (draft.credit_interest_to_bank_enabled_at ??
+        current?.credit_interest_to_bank_enabled_at ??
+        null)
+      : null,
     maturity_value,
     fd_date: emptyToNull(draft.fd_date),
     transaction_date: emptyToNull(draft.transaction_date),

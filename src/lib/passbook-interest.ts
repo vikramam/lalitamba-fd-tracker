@@ -4,6 +4,17 @@ import { paysOutInterest } from '@/lib/format'
 import { roundMoney } from '@/lib/passbook-ledger'
 import type { FdClosure, FdRenewal, FixedDeposit } from '@/lib/types'
 
+export const INTEREST_CYCLE_CUTOVER_DATE = '2026-10-01'
+export const INTEREST_CYCLE_CUTOVER_PERIOD_START = '2026-09-01'
+
+export type InterestCredit = {
+  periodStart: string
+  periodEnd: string
+  creditDate: string
+  amount: number
+  final?: boolean
+}
+
 export function addCalendarMonths(iso: string, months: number): string {
   const start = parseLocalDate(iso)
   if (!start) return iso.slice(0, 10)
@@ -31,6 +42,113 @@ export function interestStepMonths(mode: FixedDeposit['interest_mode']) {
   return 0
 }
 
+function monthStart(iso: string) {
+  return `${iso.slice(0, 7)}-01`
+}
+
+function monthEnd(iso: string) {
+  const date = parseLocalDate(monthStart(iso))
+  if (!date) return iso.slice(0, 10)
+  return todayIso(new Date(date.getFullYear(), date.getMonth() + 1, 0))
+}
+
+function nextDay(iso: string) {
+  const date = parseLocalDate(iso)
+  if (!date) return iso.slice(0, 10)
+  date.setDate(date.getDate() + 1)
+  return todayIso(date)
+}
+
+function previousDay(iso: string) {
+  const date = parseLocalDate(iso)
+  if (!date) return iso.slice(0, 10)
+  date.setDate(date.getDate() - 1)
+  return todayIso(date)
+}
+
+function daysInYear(year: number) {
+  return new Date(year, 1, 29).getMonth() === 1 ? 366 : 365
+}
+
+function inclusiveActualYearInterest(fd: FixedDeposit, startIso: string, endIso: string) {
+  if (fd.interest_rate_pct === null) return null
+  const start = parseLocalDate(startIso)
+  const end = parseLocalDate(endIso)
+  if (!start || !end || end < start) return null
+
+  let amount = 0
+  const cursor = new Date(start)
+  while (cursor <= end) {
+    const year = cursor.getFullYear()
+    const endOfYear = new Date(year, 11, 31)
+    const segmentEnd = end < endOfYear ? end : endOfYear
+    const days = Math.round((segmentEnd.getTime() - cursor.getTime()) / 86_400_000) + 1
+    amount += (fd.principal_amount * fd.interest_rate_pct * days) / 100 / daysInYear(year)
+    cursor.setFullYear(year + 1, 0, 1)
+  }
+  return roundMoney(amount)
+}
+
+function firstCycle(fd: FixedDeposit, floor: string): InterestCredit | null {
+  const fdStart = (fd.fd_date ?? fd.transaction_date)?.slice(0, 10)
+  if (!fdStart) return null
+  const periodStart = [fdStart, floor, INTEREST_CYCLE_CUTOVER_PERIOD_START].reduce(
+    (latest, value) => (value > latest ? value : latest),
+  )
+  const periodEnd = monthEnd(periodStart)
+  const creditDate = nextDay(periodEnd)
+  if (creditDate < INTEREST_CYCLE_CUTOVER_DATE) return null
+
+  let amount: number | null
+  const fullCalendarMonth = periodStart === monthStart(periodStart)
+  if (fd.interest_mode === 'monthly' && fullCalendarMonth) {
+    amount = interestPayoutOf(fd)
+  } else {
+    amount = inclusiveActualYearInterest(fd, periodStart, periodEnd)
+  }
+  if (amount === null || amount <= 0) return null
+  return { periodStart, periodEnd, creditDate, amount }
+}
+
+function recurringCycle(
+  fd: FixedDeposit,
+  periodStart: string,
+): InterestCredit | null {
+  const months = interestStepMonths(fd.interest_mode)
+  if (!months) return null
+  const periodEnd = previousDay(addCalendarMonths(periodStart, months))
+  const amount = interestPayoutOf(fd)
+  if (amount === null || amount <= 0) return null
+  return {
+    periodStart,
+    periodEnd,
+    creditDate: nextDay(periodEnd),
+    amount,
+  }
+}
+
+function finalMaturityCredit(
+  fd: FixedDeposit,
+  periodStart: string,
+  maturity: string,
+  today: string,
+  stop: string,
+): InterestCredit | null {
+  if (today < maturity) return null
+  if (maturity > stop) return null
+  if (maturity < INTEREST_CYCLE_CUTOVER_DATE) return null
+  if (maturity < periodStart) return null
+  const amount = inclusiveActualYearInterest(fd, periodStart, maturity)
+  if (amount === null || amount <= 0) return null
+  return {
+    periodStart,
+    periodEnd: maturity,
+    creditDate: maturity,
+    amount,
+    final: true,
+  }
+}
+
 export function fdInterestStopDate(
   fd: FixedDeposit,
   closures: FdClosure[],
@@ -46,40 +164,39 @@ export function fdInterestStopDate(
   return dates.reduce((earliest, value) => (value < earliest ? value : earliest))
 }
 
-export function interestPeriodDates(fd: FixedDeposit, stopIso: string): string[] {
-  const start = (fd.fd_date ?? fd.transaction_date)?.slice(0, 10)
-  const step = interestStepMonths(fd.interest_mode)
-  if (!start || !step || interestPayoutOf(fd) === null) return []
-
-  const dates: string[] = []
-  for (let n = step; n <= 12 * 40; n += step) {
-    const due = addCalendarMonths(start, n)
-    if (due <= start) continue
-    if (due > stopIso) break
-    dates.push(due)
-  }
-  return dates
-}
-
-export function subsequentInterestDates(
+export function interestCredits(
   fd: FixedDeposit,
   passbookCreatedOn: string,
   closures: FdClosure[],
   renewals: FdRenewal[],
   now = new Date(),
-) {
-  if (fd.status !== 'active') return []
+): InterestCredit[] {
+  if (fd.status !== 'active' && fd.status !== 'matured') return []
+  if (!paysOutInterest(fd.interest_mode)) return []
+
   const today = todayIso(now)
   const maturity = fd.maturity_date?.slice(0, 10) || null
-  if (maturity && maturity <= today) return []
-
   const floor = passbookCreatedOn.slice(0, 10)
   const stop = fdInterestStopDate(fd, closures, renewals, now)
-  return interestPeriodDates(fd, stop).filter((due) => {
-    if (due < floor) return false
-    if (maturity && due >= maturity) return false
-    return true
-  })
+  const first = firstCycle(fd, floor)
+  if (!first) return []
+
+  const credits: InterestCredit[] = []
+  let credit: InterestCredit | null = first
+  let unfinishedStart = first.periodStart
+  for (let periods = 0; credit && periods < 12 * 40; periods += 1) {
+    if (credit.creditDate > today || credit.creditDate > stop) break
+    if (maturity && credit.periodEnd >= maturity) break
+    credits.push(credit)
+    unfinishedStart = nextDay(credit.periodEnd)
+    credit = recurringCycle(fd, unfinishedStart)
+  }
+
+  if (maturity) {
+    const final = finalMaturityCredit(fd, unfinishedStart, maturity, today, stop)
+    if (final) credits.push(final)
+  }
+  return credits
 }
 
 export function msAccountsForMember(deposits: FixedDeposit[], memberId: string) {

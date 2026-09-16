@@ -17,9 +17,8 @@ import {
   wouldGoNegative,
 } from '@/lib/passbook-ledger'
 import {
-  interestPayoutOf,
+  interestCredits,
   msAccountsForMember,
-  subsequentInterestDates,
 } from '@/lib/passbook-interest'
 import { supabase } from '@/lib/supabase'
 import type {
@@ -36,7 +35,7 @@ export const PASSBOOK_SETUP_MESSAGE =
   'Run supabase/migrations/0011_passbook.sql in the SQL editor, then try again.'
 
 export const MEMBER_SELECT =
-  'id, family_id, full_name, display_name, linked_user_id, bank_customer_id, account_number, notes'
+  'id, family_id, full_name, display_name, linked_user_id, bank_customer_id, account_number, interest_credit_bank_account, bank_name, notes'
 export const MEMBER_SELECT_LEGACY =
   'id, family_id, full_name, display_name, linked_user_id, bank_customer_id, notes'
 export const PASSBOOK_SELECT = 'id, family_id, family_member_id, created_on, created_at'
@@ -64,6 +63,9 @@ export function mapMemberRow(row: Record<string, unknown>): FamilyMember {
     linked_user_id: (row.linked_user_id as string | null) ?? null,
     bank_customer_id: (row.bank_customer_id as string | null) ?? null,
     account_number: (row.account_number as string | null) ?? null,
+    interest_credit_bank_account:
+      (row.interest_credit_bank_account as string | null) ?? null,
+    bank_name: (row.bank_name as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
   }
 }
@@ -338,44 +340,104 @@ export async function syncPassbookInterest(
   const existing = txsForPassbook(household, passbook.id)
   const postedKeys = new Set([
     ...existing
-      .filter((row) => row.source_type === 'fd_interest' && row.source_fd_id && row.interest_period_date)
-      .map((row) => `${row.source_fd_id}:${row.interest_period_date}`),
+      .filter((row) => row.source_type === 'fd_interest' && row.source_fd_id)
+      .map((row) =>
+        row.remarks?.startsWith('Final interest credit')
+          ? `${row.source_fd_id}:final:${row.txn_date}`
+          : `${row.source_fd_id}:${row.interest_period_date ?? row.txn_date}`,
+      ),
     ...readSkippedInterest(),
   ])
+  const transferredKeys = new Set(
+    existing
+      .filter(
+        (row) =>
+          row.source_type === 'fd_interest_bank' &&
+          row.source_fd_id &&
+          row.interest_period_date,
+      )
+      .map((row) => `${row.source_fd_id}:${row.interest_period_date}`),
+  )
 
   let current = { ...household, passbookTransactions: [...household.passbookTransactions] }
   let added = 0
 
   for (const fd of memberFds) {
-    const amount = interestPayoutOf(fd)
-    if (amount === null) continue
-    const dues = subsequentInterestDates(
+    const member = household.members.find((row) => row.id === fd.family_member_id)
+    const credits = interestCredits(
       fd,
       passbook.created_on,
       household.closures,
       household.renewals,
       now,
     )
-    for (const due of dues) {
-      const key = `${fd.id}:${due}`
-      if (postedKeys.has(key)) continue
-      const tx = await addPassbookTransaction(current, {
-        passbook,
-        txn_date: due,
-        txn_type: 'credit',
-        amount,
-        reference: fd.fd_account_no,
-        remarks: fd.interest_mode === 'quarterly' ? 'Quarterly interest' : 'Monthly interest',
-        source_type: 'fd_interest',
-        source_fd_id: fd.id,
-        interest_period_date: due,
-      }, now)
-      postedKeys.add(key)
-      current = {
-        ...current,
-        passbookTransactions: [...current.passbookTransactions, tx],
+    for (const credit of credits) {
+      const creditKey = credit.final
+        ? `${fd.id}:final:${credit.creditDate}`
+        : `${fd.id}:${credit.creditDate}`
+      let creditTx = current.passbookTransactions.find(
+        (row) =>
+          row.passbook_id === passbook.id &&
+          row.source_type === 'fd_interest' &&
+          row.source_fd_id === fd.id &&
+          row.interest_period_date === credit.creditDate,
+      )
+
+      if (!postedKeys.has(creditKey)) {
+        const period = `${formatDate(credit.periodStart)} to ${formatDate(credit.periodEnd)}`
+        const fdNo = fd.fd_account_no?.trim() || '—'
+        const remarks = credit.final
+          ? `Final interest credit for FD: ${fdNo} · ${period}`
+          : `${
+              fd.interest_mode === 'quarterly' ? 'Quarterly interest' : 'Monthly interest'
+            } · ${period}`
+        creditTx = await addPassbookTransaction(current, {
+          passbook,
+          txn_date: credit.creditDate,
+          txn_type: 'credit',
+          amount: credit.amount,
+          reference: fd.fd_account_no,
+          remarks,
+          source_type: 'fd_interest',
+          source_fd_id: fd.id,
+          interest_period_date: credit.creditDate,
+        }, now)
+        postedKeys.add(creditKey)
+        current = {
+          ...current,
+          passbookTransactions: [...current.passbookTransactions, creditTx],
+        }
+        added += 1
       }
-      added += 1
+
+      const transferKey = `${fd.id}:${credit.creditDate}`
+      const enabledAt = fd.credit_interest_to_bank_enabled_at
+      const shouldTransfer =
+        fd.credit_interest_to_bank &&
+        Boolean(enabledAt) &&
+        Boolean(creditTx) &&
+        creditTx!.created_at >= enabledAt! &&
+        !transferredKeys.has(transferKey)
+      if (shouldTransfer) {
+        const bankAccount = member?.interest_credit_bank_account?.trim() || '-'
+        const transfer = await addPassbookTransaction(current, {
+          passbook,
+          txn_date: credit.creditDate,
+          txn_type: 'debit',
+          amount: credit.amount,
+          reference: fd.fd_account_no,
+          remarks: `Interest credited to Bank · Interest Credit Bank Ac/No: ${bankAccount}`,
+          source_type: 'fd_interest_bank',
+          source_fd_id: fd.id,
+          interest_period_date: credit.creditDate,
+        }, now)
+        transferredKeys.add(transferKey)
+        current = {
+          ...current,
+          passbookTransactions: [...current.passbookTransactions, transfer],
+        }
+        added += 1
+      }
     }
   }
 

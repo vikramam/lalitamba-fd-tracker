@@ -94,9 +94,18 @@ export function updateDemoFamily(id: string, name: string): Family | null {
 }
 
 export function addDemoMember(
-  input: Omit<FamilyMember, 'id' | 'linked_user_id' | 'account_number'> & {
+  input: Omit<
+    FamilyMember,
+    | 'id'
+    | 'linked_user_id'
+    | 'account_number'
+    | 'interest_credit_bank_account'
+    | 'bank_name'
+  > & {
     linked_user_id?: string | null
     account_number?: string | null
+    interest_credit_bank_account?: string | null
+    bank_name?: string | null
   },
 ): FamilyMember {
   const member: FamilyMember = {
@@ -106,6 +115,8 @@ export function addDemoMember(
     display_name: input.display_name?.trim() || null,
     bank_customer_id: input.bank_customer_id?.trim() || null,
     account_number: input.account_number?.trim() || null,
+    interest_credit_bank_account: input.interest_credit_bank_account?.trim() || null,
+    bank_name: input.bank_name?.trim() || null,
     linked_user_id: input.linked_user_id ?? null,
     notes: input.notes?.trim() || null,
   }
@@ -147,6 +158,8 @@ export function updateDemoMember(
   id: string,
   input: Pick<FamilyMember, 'full_name' | 'display_name' | 'bank_customer_id' | 'notes'> & {
     account_number?: string | null
+    interest_credit_bank_account?: string | null
+    bank_name?: string | null
   },
 ): FamilyMember | null {
   const extras = readDemoMembers()
@@ -166,6 +179,12 @@ export function updateDemoMember(
       input.account_number === undefined
         ? current.account_number
         : input.account_number?.trim() || null,
+    interest_credit_bank_account:
+      input.interest_credit_bank_account === undefined
+        ? current.interest_credit_bank_account
+        : input.interest_credit_bank_account?.trim() || null,
+    bank_name:
+      input.bank_name === undefined ? current.bank_name : input.bank_name?.trim() || null,
     notes: input.notes?.trim() || null,
   }
   if (extraIndex === -1) extras.push(next)

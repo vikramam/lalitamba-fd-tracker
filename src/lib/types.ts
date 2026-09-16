@@ -49,11 +49,13 @@ export type FamilyMember = {
   linked_user_id: string | null
   bank_customer_id: string | null
   account_number: string | null
+  interest_credit_bank_account: string | null
+  bank_name: string | null
   notes: string | null
 }
 
 export type PassbookTxnType = 'credit' | 'debit'
-export type PassbookSource = 'manual' | 'fd_interest'
+export type PassbookSource = 'manual' | 'fd_interest' | 'fd_interest_bank'
 
 export type MemberPassbook = {
   id: string
@@ -98,6 +100,8 @@ export type FixedDeposit = {
   interest_mode: InterestMode
   monthly_interest_amount: number | null
   interest_credit_account: string | null
+  credit_interest_to_bank: boolean
+  credit_interest_to_bank_enabled_at: string | null
   maturity_value: number | null
   fd_date: string | null
   transaction_date: string | null

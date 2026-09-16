@@ -1,7 +1,7 @@
 import type { FixedDeposit } from '@/lib/types'
 
 export const FD_SELECT =
-  'id, family_id, family_member_id, fd_account_no, bank_customer_id, holder_name, holder_address, principal_amount, principal_amount_words, interest_rate_pct, tenure_years, tenure_months, tenure_days, tenure_label, interest_mode, monthly_interest_amount, interest_credit_account, maturity_value, fd_date, transaction_date, print_at, maturity_date, nominee_name, nominee_relationship, status, notes'
+  'id, family_id, family_member_id, fd_account_no, bank_customer_id, holder_name, holder_address, principal_amount, principal_amount_words, interest_rate_pct, tenure_years, tenure_months, tenure_days, tenure_label, interest_mode, monthly_interest_amount, interest_credit_account, credit_interest_to_bank, credit_interest_to_bank_enabled_at, maturity_value, fd_date, transaction_date, print_at, maturity_date, nominee_name, nominee_relationship, status, notes'
 
 function toNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined || value === '') return null
@@ -29,6 +29,9 @@ export function mapFixedDeposit(row: Record<string, unknown>): FixedDeposit {
       row.monthly_interest_amount as string | number | null,
     ),
     interest_credit_account: (row.interest_credit_account as string | null) ?? null,
+    credit_interest_to_bank: Boolean(row.credit_interest_to_bank),
+    credit_interest_to_bank_enabled_at:
+      (row.credit_interest_to_bank_enabled_at as string | null) ?? null,
     maturity_value: toNumber(row.maturity_value as string | number | null),
     fd_date: (row.fd_date as string | null) ?? null,
     transaction_date: (row.transaction_date as string | null) ?? null,

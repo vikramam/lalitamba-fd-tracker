@@ -11,7 +11,12 @@ import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { interestCreditedToDate } from '@/lib/dashboard'
 import { fdCheckMessages } from '@/lib/fd-checks'
-import { canDeleteFds, canWriteFds, deleteFd } from '@/lib/fds'
+import {
+  canDeleteFds,
+  canWriteFds,
+  deleteFd,
+  updateCreditInterestToBank,
+} from '@/lib/fds'
 import { formatDate, formatFileSize, formatInr, formatInterestMode, formatStatus, paysOutInterest } from '@/lib/format'
 import { canLifecycle, carryMessage, findRenewalFor, renewalChain } from '@/lib/lifecycle'
 import { currentReceipt, receiptViewUrl } from '@/lib/receipts'
@@ -157,6 +162,7 @@ export function FdDetailPage() {
   const { household, loading, reload } = useHousehold()
   const { confirm, alertError } = useDialog()
   const [deleting, setDeleting] = useState(false)
+  const [savingBankTransfer, setSavingBankTransfer] = useState(false)
   const fd = household?.deposits.find((row) => row.id === fdId)
   const member = household?.members.find((row) => row.id === fd?.family_member_id)
   const familyName = household?.families.find(
@@ -214,6 +220,19 @@ export function FdDetailPage() {
       await alertError(cause, 'Could not delete that FD.', 'Cannot delete')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  async function onToggleBankTransfer() {
+    if (savingBankTransfer) return
+    setSavingBankTransfer(true)
+    try {
+      await updateCreditInterestToBank(deposit, !deposit.credit_interest_to_bank)
+      await reload()
+    } catch (cause) {
+      await alertError(cause, 'Could not update bank interest transfer.')
+    } finally {
+      setSavingBankTransfer(false)
     }
   }
 
@@ -388,6 +407,42 @@ export function FdDetailPage() {
             }
           />
           <Row label="MS A/c" value={fd.interest_credit_account} />
+          {canEdit && fd.status === 'active' ? (
+            <div className="py-3 first:pt-1 last:pb-1">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="type-card-title text-ink">Credit Interest to Bank</p>
+                  <p className="mt-1 type-small">
+                    {member?.bank_name || 'Bank not specified'} ·{' '}
+                    <span className="font-mono">
+                      {member?.interest_credit_bank_account || '-'}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={fd.credit_interest_to_bank}
+                  aria-label="Credit interest to bank"
+                  disabled={savingBankTransfer}
+                  onClick={() => void onToggleBankTransfer()}
+                  className={cn(
+                    'inline-flex h-7 w-12 shrink-0 items-center rounded-full border p-0 transition-colors disabled:opacity-50',
+                    fd.credit_interest_to_bank
+                      ? 'border-accent bg-accent'
+                      : 'border-line bg-inner',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'block size-5 rounded-full bg-white shadow-sm transition-transform',
+                      fd.credit_interest_to_bank ? 'translate-x-6' : 'translate-x-1',
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+          ) : null}
         </SectionCard>
       ) : null}
 

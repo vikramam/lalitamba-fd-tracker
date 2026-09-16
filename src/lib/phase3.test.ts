@@ -66,6 +66,9 @@ describe('normalizeMemberInput', () => {
         full_name: '  Amrutmati Vikram Mulgund  ',
         display_name: ' Amrutmati ',
         bank_customer_id: ' 1700 ',
+        account_number: ' 01003MS001396 ',
+        interest_credit_bank_account: ' 123445677 ',
+        bank_name: ' Test Bank ',
         notes: ' wife ',
       }),
     ).toEqual({
@@ -73,8 +76,10 @@ describe('normalizeMemberInput', () => {
       full_name: 'Amrutmati Vikram Mulgund',
       display_name: 'Amrutmati',
       bank_customer_id: '1700',
+      account_number: '01003MS001396',
+      interest_credit_bank_account: '123445677',
+      bank_name: 'Test Bank',
       notes: 'wife',
-      account_number: null,
     })
   })
 })

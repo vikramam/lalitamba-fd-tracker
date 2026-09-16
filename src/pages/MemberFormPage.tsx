@@ -84,6 +84,10 @@ function MemberForm({
   const [displayName, setDisplayName] = useState(member?.display_name ?? '')
   const [cid, setCid] = useState(member?.bank_customer_id ?? '')
   const [accountNumber, setAccountNumber] = useState(member?.account_number ?? '')
+  const [interestCreditBankAccount, setInterestCreditBankAccount] = useState(
+    member?.interest_credit_bank_account ?? '',
+  )
+  const [bankName, setBankName] = useState(member?.bank_name ?? '')
   const [notes, setNotes] = useState(member?.notes ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -103,6 +107,8 @@ function MemberForm({
         display_name: displayName,
         bank_customer_id: cid,
         account_number: accountNumber,
+        interest_credit_bank_account: interestCreditBankAccount,
+        bank_name: bankName,
         notes,
       }
       if (isNew) {
@@ -199,13 +205,32 @@ function MemberForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="accountNumber">Account number</Label>
+          <Label htmlFor="accountNumber">Lalitamba Ac/No</Label>
           <Input
             id="accountNumber"
             value={accountNumber}
             onChange={(event) => setAccountNumber(event.target.value)}
             placeholder="01003MS001396"
             className="font-mono"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="interestCreditBankAccount">Interest Credit Bank Ac/No</Label>
+          <Input
+            id="interestCreditBankAccount"
+            value={interestCreditBankAccount}
+            onChange={(event) => setInterestCreditBankAccount(event.target.value)}
+            placeholder="123445677"
+            className="font-mono"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="bankName">Bank Name</Label>
+          <Input
+            id="bankName"
+            value={bankName}
+            onChange={(event) => setBankName(event.target.value)}
+            placeholder="Bank name"
           />
         </div>
         <div className="space-y-2">

@@ -89,6 +89,8 @@ function writePayload(row: ReturnType<typeof normalizeFdInput>) {
     interest_mode: row.interest_mode,
     monthly_interest_amount: row.monthly_interest_amount,
     interest_credit_account: row.interest_credit_account,
+    credit_interest_to_bank: row.credit_interest_to_bank,
+    credit_interest_to_bank_enabled_at: row.credit_interest_to_bank_enabled_at,
     maturity_value: row.maturity_value,
     fd_date: row.fd_date,
     transaction_date: row.transaction_date,
@@ -140,6 +142,37 @@ export async function updateFd(
     .select(FD_SELECT)
     .single()
   if (error) throw mapFdWriteError(error)
+  return mapFixedDeposit(data as Record<string, unknown>)
+}
+
+export async function updateCreditInterestToBank(
+  fd: FixedDeposit,
+  enabled: boolean,
+): Promise<FixedDeposit> {
+  if (fd.status !== 'active' || !['monthly', 'quarterly'].includes(fd.interest_mode)) {
+    throw new Error('Bank interest transfer is only available for active monthly or quarterly FDs.')
+  }
+  const enabledAt = enabled ? new Date().toISOString() : null
+  if (!supabase) {
+    const updated = updateDemoFd(fd.id, {
+      ...fd,
+      credit_interest_to_bank: enabled,
+      credit_interest_to_bank_enabled_at: enabledAt,
+    })
+    if (!updated) throw new Error('Deposit not found.')
+    return updated
+  }
+  const { data, error } = await supabase
+    .from('fixed_deposits')
+    .update({
+      credit_interest_to_bank: enabled,
+      credit_interest_to_bank_enabled_at: enabledAt,
+    })
+    .eq('id', fd.id)
+    .eq('status', 'active')
+    .select(FD_SELECT)
+    .single()
+  if (error) throw new Error(error.message)
   return mapFixedDeposit(data as Record<string, unknown>)
 }
 

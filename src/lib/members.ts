@@ -135,6 +135,8 @@ export async function updateMember(
       display_name: row.display_name,
       bank_customer_id: row.bank_customer_id,
       account_number: row.account_number,
+      interest_credit_bank_account: row.interest_credit_bank_account,
+      bank_name: row.bank_name,
       notes: row.notes,
     })
     .eq('id', id)

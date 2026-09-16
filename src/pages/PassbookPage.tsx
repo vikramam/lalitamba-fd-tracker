@@ -13,7 +13,7 @@ import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { useAuth } from '@/lib/auth'
 import { todayIso } from '@/lib/dashboard'
-import { formatInr, formatMonthHeading } from '@/lib/format'
+import { formatDate, formatInr, formatMonthHeading } from '@/lib/format'
 import { initials } from '@/lib/initials'
 import {
   filterByDateRange,
@@ -421,8 +421,9 @@ function TimelineRow({
   onDelete: () => void
 }) {
   const credit = row.txn_type === 'credit'
+  const { title, period } = txnLines(row)
   return (
-    <li className="relative flex items-start gap-3 py-2.5">
+    <li className="relative flex items-start gap-3 border-b border-line py-3 last:border-0">
       <span
         className={cn(
           'relative z-10 mt-0.5 inline-flex size-[26px] shrink-0 items-center justify-center rounded-full border-[1.5px] bg-card',
@@ -432,8 +433,13 @@ function TimelineRow({
         {credit ? <PlusIcon className="size-3.5 stroke-[2.4]" /> : <MinusIcon className="size-3.5 stroke-[2.4]" />}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="type-card-title text-ink">{txnTitle(row)}</p>
-        <p className="type-small mt-0.5 font-mono">{row.public_id}</p>
+        <p className="type-card-title text-ink">{title}</p>
+        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 type-small">
+          <span className="font-mono font-semibold text-ink">{formatDate(row.txn_date)}</span>
+          <span aria-hidden>·</span>
+          <span className="font-mono">{row.public_id}</span>
+        </p>
+        {period ? <p className="type-small mt-0.5">{period}</p> : null}
         {row.reference ? <p className="type-small font-mono">{row.reference}</p> : null}
       </div>
       <div className="flex shrink-0 items-start gap-0.5">
@@ -473,11 +479,16 @@ function monthStartIso(now = new Date()) {
   return `${year}-${month}-01`
 }
 
-function txnTitle(row: PassbookTransaction) {
+function txnLines(row: PassbookTransaction) {
   const remarks = row.remarks?.trim()
-  if (remarks) return remarks
-  if (row.source_type === 'fd_interest') return 'Monthly interest'
-  return row.txn_type === 'credit' ? 'Credit' : 'Debit'
+  if (row.source_type === 'fd_interest') {
+    const [label, ...rest] = (remarks || 'Interest').split(' · ')
+    return { title: label || 'Interest', period: rest.join(' · ') || null }
+  }
+  return {
+    title: remarks || (row.txn_type === 'credit' ? 'Credit' : 'Debit'),
+    period: null,
+  }
 }
 
 function TxnSheet({
