@@ -22,6 +22,7 @@ import {
   readFdSort,
   readFdSortDir,
   receiptDateOf,
+  rememberFdListSearch,
   sortFds,
   type FdListQuery,
   type FdSort,
@@ -44,6 +45,9 @@ export function FdListPage() {
   useEffect(() => {
     if (error) void alert('Could not load', error)
   }, [alert, error])
+  useEffect(() => {
+    rememberFdListSearch(params.toString())
+  }, [params])
   const [search, setSearch] = useState(params.get('q') ?? '')
   const sort = readFdSort(params.get('sort'))
   const dir = readFdSortDir(params.get('dir'), sort)
@@ -146,6 +150,7 @@ export function FdListPage() {
   function applyFilters(next: Partial<FdListQuery>) {
     const merged = { ...query, ...next }
     const paramsNext = new URLSearchParams()
+    if (merged.q?.trim()) paramsNext.set('q', merged.q.trim())
     if (merged.mode) paramsNext.set('mode', merged.mode)
     if (merged.due) paramsNext.set('due', merged.due)
     if (merged.member) paramsNext.set('member', merged.member)
@@ -219,10 +224,13 @@ export function FdListPage() {
       ) : null}
 
       {hasMembers ? (
-        <CollapseGroups>
+        <CollapseGroups scope="fds">
           <FdSearchFilters
             search={search}
-            onSearch={setSearch}
+            onSearch={(value) => {
+              setSearch(value)
+              applyFilters({ q: value })
+            }}
             query={query}
             sort={sort}
             dir={dir}
@@ -369,7 +377,7 @@ function FamilyFdGroup({
   household: Household | null
   view?: string | null
 }) {
-  const [open, setOpen] = useCollapseGroup()
+  const [open, setOpen] = useCollapseGroup(true, `family-${group.id}`)
   const panelId = `family-${group.id}`
   const fdCount = group.members.reduce((sum, member) => sum + member.fds.length, 0)
   const principal = group.members.reduce(
@@ -424,7 +432,7 @@ function MemberFdGroup({
   household: Household | null
   view?: string | null
 }) {
-  const [open, setOpen] = useCollapseGroup(false)
+  const [open, setOpen] = useCollapseGroup(false, `member-${group.id}`)
   const panelId = `fds-${group.id}`
   const principal = group.fds.reduce((sum, fd) => sum + fd.principal_amount, 0)
 

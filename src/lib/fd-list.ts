@@ -19,6 +19,17 @@ export type FdListQuery = {
   dir?: FdSortDir | null
 }
 
+// Remembered so leaving an FD detail page returns to the list as it was left.
+let lastFdListSearch = ''
+
+export function rememberFdListSearch(search: string) {
+  lastFdListSearch = search.startsWith('?') ? search.slice(1) : search
+}
+
+export function fdListPath() {
+  return lastFdListSearch ? `/fds?${lastFdListSearch}` : '/fds'
+}
+
 export function readFdSort(value: string | null): FdSort {
   return FD_SORTS.includes(value as FdSort) ? (value as FdSort) : 'maturity'
 }

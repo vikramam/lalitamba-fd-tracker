@@ -11,6 +11,7 @@ import { useDialog } from '@/hooks/DialogProvider'
 import { useHousehold } from '@/hooks/HouseholdProvider'
 import { interestCreditedToDate } from '@/lib/dashboard'
 import { fdCheckMessages } from '@/lib/fd-checks'
+import { fdListPath } from '@/lib/fd-list'
 import {
   canDeleteFds,
   canWriteFds,
@@ -238,7 +239,7 @@ export function FdDetailPage() {
 
   return (
     <Page>
-      <Link to="/fds" className="type-body text-muted">
+      <Link to={fdListPath()} className="type-body text-muted">
         Back
       </Link>
       <div className="mt-4">

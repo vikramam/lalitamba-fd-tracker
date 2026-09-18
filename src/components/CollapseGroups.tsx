@@ -6,7 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
 } from 'react'
 
 import { GroupsClosedIcon, GroupsOpenIcon } from '@/components/icons'
@@ -16,11 +18,21 @@ type CollapseGroupsValue = {
   allOpen: boolean
   revision: number
   setAll: (open: boolean) => void
+  scope: string | null
 }
 
 const CollapseGroupsContext = createContext<CollapseGroupsValue | null>(null)
 
-export function CollapseGroups({ children }: { children: ReactNode }) {
+// Group state lives outside React so a list reopens the way the user left it.
+const openByGroup = new Map<string, boolean>()
+
+export function CollapseGroups({
+  children,
+  scope,
+}: {
+  children: ReactNode
+  scope?: string
+}) {
   const [allOpen, setAllOpen] = useState(true)
   const [revision, setRevision] = useState(0)
   const setAll = useCallback((open: boolean) => {
@@ -28,27 +40,41 @@ export function CollapseGroups({ children }: { children: ReactNode }) {
     setRevision((value) => value + 1)
   }, [])
   const value = useMemo(
-    () => ({ allOpen, revision, setAll }),
-    [allOpen, revision, setAll],
+    () => ({ allOpen, revision, setAll, scope: scope ?? null }),
+    [allOpen, revision, setAll, scope],
   )
 
   return <CollapseGroupsContext.Provider value={value}>{children}</CollapseGroupsContext.Provider>
 }
 
-export function useCollapseGroup(defaultOpen = true) {
+export function useCollapseGroup(defaultOpen = true, id?: string) {
   const ctx = useContext(CollapseGroupsContext)
-  const [open, setOpen] = useState(() =>
-    ctx && ctx.revision > 0 ? ctx.allOpen : defaultOpen,
-  )
+  const key = ctx?.scope && id ? `${ctx.scope}:${id}` : null
+  const [open, setOpenState] = useState(() => {
+    const remembered = key ? openByGroup.get(key) : undefined
+    if (remembered !== undefined) return remembered
+    return ctx && ctx.revision > 0 ? ctx.allOpen : defaultOpen
+  })
   const revision = ctx?.revision ?? 0
   const seen = useRef(revision)
+
+  const setOpen = useCallback<Dispatch<SetStateAction<boolean>>>(
+    (value) => {
+      setOpenState((previous) => {
+        const next = typeof value === 'function' ? value(previous) : value
+        if (key) openByGroup.set(key, next)
+        return next
+      })
+    },
+    [key],
+  )
 
   useEffect(() => {
     if (!ctx) return
     if (seen.current === revision) return
     seen.current = revision
     setOpen(ctx.allOpen)
-  }, [ctx, revision])
+  }, [ctx, revision, setOpen])
 
   return [open, setOpen] as const
 }
