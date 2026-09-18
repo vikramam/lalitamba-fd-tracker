@@ -48,7 +48,11 @@ export function FdListPage() {
   useEffect(() => {
     rememberFdListSearch(params.toString())
   }, [params])
-  const [search, setSearch] = useState(params.get('q') ?? '')
+  const searchParam = params.get('q') ?? ''
+  const [search, setSearch] = useState(searchParam)
+  useEffect(() => {
+    setSearch(searchParam)
+  }, [searchParam])
   const sort = readFdSort(params.get('sort'))
   const dir = readFdSortDir(params.get('dir'), sort)
   const query: FdListQuery = {
@@ -123,6 +127,7 @@ export function FdListPage() {
                     ? 'Deposits that have been closed.'
                     : `${sortIntro(sort, dir)} Closed FDs stay hidden unless you ask for them.`
   const filtered =
+    Boolean(query.q?.trim()) ||
     Boolean(query.mode) ||
     Boolean(query.due) ||
     Boolean(query.member) ||
@@ -150,7 +155,7 @@ export function FdListPage() {
   function applyFilters(next: Partial<FdListQuery>) {
     const merged = { ...query, ...next }
     const paramsNext = new URLSearchParams()
-    if (merged.q?.trim()) paramsNext.set('q', merged.q.trim())
+    if (merged.q?.trim()) paramsNext.set('q', merged.q)
     if (merged.mode) paramsNext.set('mode', merged.mode)
     if (merged.due) paramsNext.set('due', merged.due)
     if (merged.member) paramsNext.set('member', merged.member)
@@ -239,7 +244,9 @@ export function FdListPage() {
             groupsToggle={!selectedMember && familyGroups.length > 0}
             onChange={(next) => applyFilters(next)}
             onReset={() => {
+              setSearch('')
               applyFilters({
+                q: '',
                 mode: null,
                 due: null,
                 view: null,
@@ -634,7 +641,8 @@ function FdSearchFilters({
 }) {
   const show = filterTag(query)
   const order = sortTag(sort, dir)
-  const dirty = Boolean(show || order)
+  const keyword = search.trim() ? `Search “${search.trim()}”` : null
+  const dirty = Boolean(show || order || keyword)
   const selectedShow = showFilterId(query)
 
   return (
@@ -673,6 +681,11 @@ function FdSearchFilters({
       {dirty ? (
         <div className="mt-2.5 flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            {keyword ? (
+              <span className="max-w-full truncate rounded-full border border-line bg-inner px-2.5 py-1 type-small font-semibold text-ink">
+                {keyword}
+              </span>
+            ) : null}
             {show ? (
               <span className="rounded-full border border-line bg-inner px-2.5 py-1 type-small font-semibold text-ink">
                 {show}
