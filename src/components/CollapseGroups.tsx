@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -36,11 +37,16 @@ export function CollapseGroups({ children }: { children: ReactNode }) {
 
 export function useCollapseGroup(defaultOpen = true) {
   const ctx = useContext(CollapseGroupsContext)
-  const [open, setOpen] = useState(defaultOpen)
+  const [open, setOpen] = useState(() =>
+    ctx && ctx.revision > 0 ? ctx.allOpen : defaultOpen,
+  )
   const revision = ctx?.revision ?? 0
+  const seen = useRef(revision)
 
   useEffect(() => {
     if (!ctx) return
+    if (seen.current === revision) return
+    seen.current = revision
     setOpen(ctx.allOpen)
   }, [ctx, revision])
 

@@ -424,7 +424,7 @@ function MemberFdGroup({
   household: Household | null
   view?: string | null
 }) {
-  const [open, setOpen] = useCollapseGroup()
+  const [open, setOpen] = useCollapseGroup(false)
   const panelId = `fds-${group.id}`
   const principal = group.fds.reduce((sum, fd) => sum + fd.principal_amount, 0)
 

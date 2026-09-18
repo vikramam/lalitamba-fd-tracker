@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useLayoutEffect, useRef } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { AppLogo } from '@/components/AppLogo'
 import { DemoBanner } from '@/components/DemoBanner'
@@ -18,6 +19,12 @@ const tabs = [
 
 export function AppShell() {
   const { canSwitchFamily } = useHousehold()
+  const { pathname } = useLocation()
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 })
+  }, [pathname])
 
   return (
     <div className="flex h-svh flex-col overflow-hidden bg-canvas supports-[height:100dvh]:h-dvh">
@@ -53,7 +60,10 @@ export function AppShell() {
           </nav>
         </aside>
 
-        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-none">
+        <div
+          ref={scrollRef}
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-none"
+        >
           <Outlet />
         </div>
       </div>
